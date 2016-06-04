@@ -11,6 +11,7 @@ inline bool is_fd(const std::string& str)
 
 struct CodePrinter
 {
+  virtual ~CodePrinter(){}
   struct argument_t
   {
     std::string type;
