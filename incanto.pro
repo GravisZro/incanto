@@ -18,7 +18,8 @@ HEADERS += \
     code_printer.h \
     pdtk_printer.h
 
-mac {
+# show these files but don't build them
+showem {
 SOURCES += \
     ../pdtk/asocket.cpp \
     ../pdtk/application.cpp \
