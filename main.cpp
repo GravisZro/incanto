@@ -9,7 +9,7 @@ int main(int argc, char *argv[])
 {
   CodePrinter* printer = nullptr;
 
-  std::string filename = "/home/gravis/demo-file.h";
+  std::string filename = "/tmp/demo-file.h";
 
   printer = new PDTKPrinter;
 
@@ -23,7 +23,10 @@ int main(int argc, char *argv[])
       printer->print_remote();
       printer->print_close();
       printer->file_close();
+      std::cout << "success!" << std::endl;
     }
+    else
+      std::cout << "failed!" << std::endl;
 
     delete printer;
     printer = nullptr;
