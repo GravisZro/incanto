@@ -3,9 +3,6 @@
 
 #include "code_printer.h"
 
-
-
-
 struct PDTKPrinter : CodePrinter
 {
   void print_open(void)
@@ -23,8 +20,11 @@ struct PDTKPrinter : CodePrinter
         << std::endl << "{"
         << std::endl << "public:"
         << std::endl << "  template<typename... Args>"
-        << std::endl << "  RPC(Args... args) : SingleSocket(args...)"
-        << std::endl << "  { Object::connect(readFinished, this, &RPC::receive); }";
+        << std::endl << "  RPC(Args... args) : SingleSocket(args...)";
+    if(!remote_functions.empty())
+      out << std::endl << "  { Object::connect(readFinished, this, &RPC::receive); }";
+    else
+      out << " { }";
   }
 
   void print_close(void)
@@ -34,9 +34,11 @@ struct PDTKPrinter : CodePrinter
 
   void print_remote(void)
   {
+    if(remote_functions.empty())
+      return;
     out << std::endl << "public:";
 
-    for(function_descriptor& func : functions)
+    for(function_descriptor& func : remote_functions)
     {
       out << std::endl << "  bool " << func.name << "(";
       for(auto pos = func.arguments.begin(); pos != func.arguments.end(); ++pos)
@@ -73,8 +75,10 @@ struct PDTKPrinter : CodePrinter
 
   void print_local(void)
   {
+    if(local_functions.empty())
+      return;
     out << std::endl << "public:";
-    for(function_descriptor& func : functions)
+    for(function_descriptor& func : local_functions)
     {
       out << std::endl << "  signal<";
 
@@ -97,7 +101,7 @@ struct PDTKPrinter : CodePrinter
         << std::endl << "      switch(hash(tmpstr))"
         << std::endl << "      {";
 
-    for(function_descriptor& func : functions)
+    for(function_descriptor& func : local_functions)
     {
       out << std::endl << "        case \"" << func.name << "\"_hash:";
 

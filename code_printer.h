@@ -25,7 +25,8 @@ struct CodePrinter
   };
 
   std::fstream out;
-  std::list<function_descriptor> functions;
+  std::list<function_descriptor> local_functions;
+  std::list<function_descriptor> remote_functions;
 
   bool file_open(std::string filename)
   {

@@ -17,7 +17,8 @@ int main(int argc, char *argv[])
   {
     if(printer->file_open(filename))
     {
-      printer->functions.push_back({"example", {{"posix::fd_t", "fd"}, {"long", "demo"}}});
+      printer->local_functions.push_back({"local_example", {{"posix::fd_t", "fd"}, {"long", "demo"}, {"std::string", "lol"}}});
+      printer->remote_functions.push_back({"remote_example", {}});
       printer->print_open();
       printer->print_local();
       printer->print_remote();
