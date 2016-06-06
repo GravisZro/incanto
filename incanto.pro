@@ -13,7 +13,7 @@ LIBS += -lpthread
 
 INCLUDEPATH += ../pdtk
 
-SOURCES += main.cpp
+SOURCES = main.cpp
 
 HEADERS += \
     code_printer.h \
@@ -24,6 +24,7 @@ showem {
 SOURCES += \
     ../pdtk/asocket.cpp \
     ../pdtk/application.cpp \
+    ../pdtk/process.cpp \
     ../pdtk/specialized/eventbackend.cpp \
     ../pdtk/specialized/getpeercred.cpp
 
@@ -36,6 +37,7 @@ HEADERS += \
     ../pdtk/cxxutils/hashing.h \
     ../pdtk/object.h \
     ../pdtk/application.h \
+    ../pdtk/process.h \
     ../pdtk/rpc.h \
     ../pdtk/specialized/eventbackend.h \
     ../pdtk/specialized/getpeercred.h \

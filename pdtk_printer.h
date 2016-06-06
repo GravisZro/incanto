@@ -45,7 +45,11 @@ struct PDTKPrinter : CodePrinter
       {
         if(pos != func.arguments.begin())
           out << ", ";
-        out << pos->type << " " << pos->name;
+        out << "const " << pos->type;
+        if(pos->type.find("<") != std::string::npos || // if template OR
+           pos->type.find("string") != std::string::npos) // if string
+          out << "&";
+        out << " " << pos->name;
       }
 
       out << ") { return call(\"" << func.name << "\", ";
@@ -94,11 +98,11 @@ struct PDTKPrinter : CodePrinter
     out << std::endl << "private:"
         << std::endl << "  void receive(message_t msg)"
         << std::endl << "  {"
-        << std::endl << "    std::string tmpstr;"
-        << std::endl << "    if(!(msg.buffer >> tmpstr).hadError() && tmpstr == \"RPC\")"
+        << std::endl << "    std::string str;"
+        << std::endl << "    if(!(msg.buffer >> str).hadError() && str == \"RPC\")"
         << std::endl << "    {"
-        << std::endl << "      msg.buffer >> tmpstr;"
-        << std::endl << "      switch(hash(tmpstr))"
+        << std::endl << "      msg.buffer >> str;"
+        << std::endl << "      switch(hash(str))"
         << std::endl << "      {";
 
     for(function_descriptor& func : local_functions)
