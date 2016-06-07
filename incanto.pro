@@ -40,5 +40,5 @@ HEADERS += \
     ../pdtk/process.h \
     ../pdtk/rpc.h \
     ../pdtk/specialized/eventbackend.h \
-    ../pdtk/specialized/getpeercred.h \
+    ../pdtk/specialized/getpeercred.h
 }
