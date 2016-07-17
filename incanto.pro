@@ -17,14 +17,14 @@ SOURCES = main.cpp
 
 HEADERS += \
     code_printer.h \
-    pdtk_printer.h
+    code_printer/base.h \
+    code_printer/cpp.h
 
 # show these files but don't build them
 showem {
 SOURCES += \
     ../pdtk/asocket.cpp \
     ../pdtk/application.cpp \
-    ../pdtk/process.cpp \
     ../pdtk/specialized/eventbackend.cpp \
     ../pdtk/specialized/getpeercred.cpp
 
@@ -37,7 +37,6 @@ HEADERS += \
     ../pdtk/cxxutils/hashing.h \
     ../pdtk/object.h \
     ../pdtk/application.h \
-    ../pdtk/process.h \
     ../pdtk/rpc.h \
     ../pdtk/specialized/eventbackend.h \
     ../pdtk/specialized/getpeercred.h

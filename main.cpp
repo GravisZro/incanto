@@ -1,5 +1,4 @@
-#include "code_printer.h"
-#include "pdtk_printer.h"
+#include "code_printer/cpp.h"
 
 // STL
 #include <fstream>
@@ -7,11 +6,14 @@
 
 int main(int argc, char *argv[])
 {
-  CodePrinter* printer = nullptr;
+  (void)argc;
+  (void)argv;
+
+  VirtualCodePrinter* printer = nullptr;
 
   std::string filename = "/tmp/demo-file.h";
 
-  printer = new PDTKPrinter;
+  printer = new CodePrinter;
 
   if(printer != nullptr)
   {

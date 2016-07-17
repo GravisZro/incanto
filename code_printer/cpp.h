@@ -1,9 +1,9 @@
-#ifndef PDTK_PRINTER_H
-#define PDTK_PRINTER_H
+#ifndef CPP_H
+#define CPP_H
 
-#include "code_printer.h"
+#include "base.h"
 
-struct PDTKPrinter : CodePrinter
+struct CodePrinter : CodePrinterBase
 {
   void print_open(void)
   {
@@ -143,4 +143,4 @@ struct PDTKPrinter : CodePrinter
   }
 };
 
-#endif // PDTK_PRINTER_H
+#endif // CPP_H
