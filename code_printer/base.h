@@ -4,10 +4,6 @@
 #include <string>
 #include <list>
 #include <fstream>
-#include <algorithm>
-
-inline bool is_fd(const std::string& str)
-  { return str == "posix::fd_t" || str == "fd_t"; }
 
 struct CodePrinterBase
 {
@@ -25,6 +21,7 @@ struct CodePrinterBase
   };
 
   std::fstream out;
+  std::string relative_filename;
   std::list<function_descriptor> local_functions;
   std::list<function_descriptor> remote_functions;
 
@@ -33,21 +30,19 @@ struct CodePrinterBase
     out.open(filename, std::ios_base::out | std::ios_base::trunc);
     if(out.is_open())
     {
-      size_t slash_pos = filename.find_last_of('/');
+      std::size_t slash_pos = filename.rfind('/');
       if(slash_pos != std::string::npos)
-        filename = filename.substr(slash_pos + 1);
-      std::transform(filename.begin(), filename.end(), filename.begin(),
-                     [](char l) { l = std::toupper(l); if(l < 'A' || l > 'Z') { l = '_'; } return l; });
-
-      out << "#ifndef " << filename << std::endl
-          << "#define " << filename << std::endl;
+      {
+        relative_filename = filename.substr(slash_pos + 1);
+        print_open();
+      }
     }
     return out.is_open();
   }
 
   void file_close(void)
   {
-    out << std::endl << std::endl << "#endif" << std::endl;
+    print_close();
     out.close();
   }
 
