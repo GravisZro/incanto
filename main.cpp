@@ -17,12 +17,13 @@ int main(int argc, char *argv[])
 
   if(printer != nullptr)
   {
+    printer->local_functions.push_back({"local_example", {{"posix::fd_t", "fd"}, {"long", "demo"}, {"std::string", "lol"}}});
+    printer->remote_functions.push_back({"remote_example", {{"std::string", "lulz"}, {"std::vector<int>", "arr"}}});
+    printer->local_functions.push_back({"local_example2", {{"std::string", "lulz"}, {"std::vector<int>", "arr"}}});
+    printer->remote_functions.push_back({"remote_example2", {{"long", "demo"}, {"posix::fd_t", "fd"}, {"std::string", "lol"}}});
+
     if(printer->file_open(filename))
     {
-      printer->local_functions.push_back({"local_example", {{"posix::fd_t", "fd"}, {"long", "demo"}, {"std::string", "lol"}}});
-      printer->remote_functions.push_back({"remote_example", {{"std::string", "lulz"}, {"std::vector<int>", "arr"}}});
-      printer->local_functions.push_back({"local_example2", {{"std::string", "lulz"}, {"std::vector<int>", "arr"}}});
-      printer->remote_functions.push_back({"remote_example2", {{"long", "demo"}, {"posix::fd_t", "fd"}, {"std::string", "lol"}}});
       printer->print_local();
       printer->print_remote();
       printer->file_close();
