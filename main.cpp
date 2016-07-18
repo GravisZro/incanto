@@ -1,7 +1,6 @@
 #include "code_printer/cpp.h"
 
 // STL
-#include <fstream>
 #include <iostream>
 
 int main(int argc, char *argv[])
