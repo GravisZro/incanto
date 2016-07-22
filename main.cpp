@@ -1,18 +1,23 @@
 #include "code_printer/cpp.h"
 
+#include <cxxutils/hashing.h>
+
 // STL
 #include <iostream>
+#include <memory>
+#include <string>
+#include <functional>
 
 int main(int argc, char *argv[])
 {
   (void)argc;
   (void)argv;
 
-  CodePrinterBase* printer = nullptr;
+  std::unique_ptr<CodePrinterBase> printer;
 
   std::string filename = "/tmp/demo-file.h";
 
-  printer = new CppCodePrinter;
+  printer = std::make_unique<CppCodePrinter>();
 
   if(printer != nullptr)
   {
@@ -21,18 +26,16 @@ int main(int argc, char *argv[])
     printer->local_functions.push_back({"local_example2", {{"std::string", "lulz"}, {"std::vector<int>", "arr"}}});
     printer->remote_functions.push_back({"remote_example2", {{"long", "demo"}, {"posix::fd_t", "fd"}, {"std::string", "lol"}}});
 
-    if(printer->file_open(filename))
+    try
     {
+      printer->file_open(filename);
       printer->print_local();
       printer->print_remote();
       printer->file_close();
       std::cout << "success!" << std::endl;
     }
-    else
-      std::cout << "failed!" << std::endl;
-
-    delete printer;
-    printer = nullptr;
+    catch(std::system_error e) { std::cout << "error: " << e.what() << std::endl; }
+    catch(...) { std::cout << "unexpected error!" << std::endl; }
   }
 
   return 0;

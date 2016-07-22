@@ -1,13 +1,19 @@
 #ifndef BASE_H
 #define BASE_H
 
+// STL
 #include <string>
 #include <list>
 #include <fstream>
 
+// POSIX
+#include <unistd.h>
+
+// PDTK
+#include <cxxutils/posix_helpers.h>
+
 struct CodePrinterBase
 {
-  virtual ~CodePrinterBase(){}
   struct argument_t
   {
     std::string type;
@@ -25,19 +31,23 @@ struct CodePrinterBase
   std::list<function_descriptor> local_functions;
   std::list<function_descriptor> remote_functions;
 
-  bool file_open(std::string filename)
+  CodePrinterBase(void) { out.exceptions(std::ios_base::failbit | std::ios_base::badbit ); }
+  virtual ~CodePrinterBase(void) { }
+
+  void file_open(std::string filename)
   {
-    out.open(filename, std::ios_base::out | std::ios_base::trunc);
-    if(out.is_open())
+    if(::access(filename.c_str(), F_OK) == posix::success_response)
+      if(errno == EACCES ||
+         ::access(filename.c_str(), W_OK) == posix::error_response)
+        throw(std::system_error((int)std::errc::permission_denied, std::generic_category()));
+    try { out.open(filename, std::ios_base::out | std::ios_base::trunc); }
+    catch(...) { throw(std::system_error((int)std::errc::no_such_file_or_directory, std::generic_category())); }
+    std::size_t slash_pos = filename.rfind('/');
+    if(slash_pos != std::string::npos)
     {
-      std::size_t slash_pos = filename.rfind('/');
-      if(slash_pos != std::string::npos)
-      {
-        relative_filename = filename.substr(slash_pos + 1);
-        print_open();
-      }
+      relative_filename = filename.substr(slash_pos + 1);
+      print_open();
     }
-    return out.is_open();
   }
 
   void file_close(void)

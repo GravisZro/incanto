@@ -3,6 +3,7 @@
 
 #include "base.h"
 #include <algorithm>
+#include <system_error>
 
 struct CppCodePrinter : CodePrinterBase
 {
@@ -19,9 +20,13 @@ struct CppCodePrinter : CodePrinterBase
         << std::endl << "#ifndef " << header_name
         << std::endl << "#define " << header_name
         << std::endl
+        << std::endl << "// POSIX"
+        << std::endl << "#include <sys/types.h>"
+        << std::endl
         << std::endl << "// STL"
         << std::endl << "#include <iostream>"
         << std::endl << "#include <vector>"
+        << std::endl << "#include <cstdint>"
         << std::endl
         << std::endl << "// PDTK"
         << std::endl << "#include <asocket.h>"
@@ -33,10 +38,10 @@ struct CppCodePrinter : CodePrinterBase
         << std::endl << "public:"
         << std::endl << "  template<typename... Args>"
         << std::endl << "  RPC(Args... args) : SingleSocket(args...)";
-    if(!remote_functions.empty())
-      out << std::endl << "  { Object::connect(readFinished, this, &RPC::receive); }";
-    else
+    if(remote_functions.empty())
       out << " { }";
+    else
+      out << std::endl << "  { Object::connect(readFinished, this, &RPC::receive); }";
   }
 
   void print_close(void)
@@ -69,12 +74,19 @@ struct CppCodePrinter : CodePrinterBase
 
       out << ") { return call(\"" << func.name << "\", ";
 
-      std::string fd;
+      int count = 0;
       for(auto& arg : func.arguments)
+      {
         if(is_fd(arg.type))
-          fd = arg.name;
-
-      out << (fd.empty() ? "posix::invalid_descriptor" : fd);
+        {
+          if(count)
+            throw(std::system_error((int)std::errc::invalid_argument, std::generic_category(), "only one file descriptor can be passed per call"));
+          ++count;
+          out << arg.name;
+        }
+      }
+      if(!count)
+        out << "posix::invalid_descriptor";
 
       for(auto& arg : func.arguments)
         if(!is_fd(arg.type))
