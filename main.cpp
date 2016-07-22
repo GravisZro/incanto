@@ -1,12 +1,15 @@
-#include "code_printer/cpp.h"
-
-#include <cxxutils/hashing.h>
-
 // STL
 #include <iostream>
 #include <memory>
 #include <string>
 #include <functional>
+
+// PDTK
+#include <cxxutils/hashing.h>
+
+// incanto
+#include "code_printer/cpp.h"
+
 
 int main(int argc, char *argv[])
 {
