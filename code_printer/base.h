@@ -37,11 +37,16 @@ struct CodePrinterBase
   void file_open(std::string filename)
   {
     if(::access(filename.c_str(), F_OK) == posix::success_response)
-      if(errno == EACCES ||
-         ::access(filename.c_str(), W_OK) == posix::error_response)
+    {
+      if(::access(filename.c_str(), W_OK) == posix::error_response)
         throw(std::system_error((int)std::errc::permission_denied, std::generic_category()));
+    }
+    else if(errno == std::errc::permission_denied)
+      throw(std::system_error((int)std::errc::permission_denied, std::generic_category()));
+
     try { out.open(filename, std::ios_base::out | std::ios_base::trunc); }
     catch(...) { throw(std::system_error((int)std::errc::no_such_file_or_directory, std::generic_category())); }
+
     std::size_t slash_pos = filename.rfind('/');
     if(slash_pos != std::string::npos)
     {
