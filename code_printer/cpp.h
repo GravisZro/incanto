@@ -98,7 +98,7 @@ struct CppCodePrinter : CodePrinterBase
         << std::endl << "  template<typename... ArgTypes>"
         << std::endl << "  bool call(const char* func_name, posix::fd_t fd, ArgTypes&... args)"
         << std::endl << "  {"
-        << std::endl << "    vqueue data;"
+        << std::endl << "    vfifo data;"
         << std::endl << "    data.serialize(\"RPC\", func_name, signature, args...);"
         << std::endl << "    return write(data, fd);"
         << std::endl << "  }";
