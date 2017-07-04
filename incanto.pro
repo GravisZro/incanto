@@ -22,21 +22,22 @@ HEADERS += \
 # show these files but don't build them
 showem {
 SOURCES += \
-    ../pdtk/asocket.cpp \
+    ../pdtk/socket.cpp \
+    ../pdtk/process.cpp \
     ../pdtk/application.cpp \
     ../pdtk/specialized/eventbackend.cpp \
     ../pdtk/specialized/getpeercred.cpp
 
 HEADERS += \
     ../pdtk/cxxutils/vqueue.h \
-    ../pdtk/asocket.h \
+    ../pdtk/socket.h \
+    ../pdtk/process.h \
     ../pdtk/cxxutils/posix_helpers.h \
     ../pdtk/cxxutils/socket_helpers.h \
     ../pdtk/cxxutils/error_helpers.h \
     ../pdtk/cxxutils/hashing.h \
     ../pdtk/object.h \
     ../pdtk/application.h \
-    ../pdtk/rpc.h \
     ../pdtk/specialized/eventbackend.h \
     ../pdtk/specialized/getpeercred.h
 }
