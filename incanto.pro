@@ -26,10 +26,11 @@ SOURCES += \
     ../pdtk/process.cpp \
     ../pdtk/application.cpp \
     ../pdtk/specialized/eventbackend.cpp \
-    ../pdtk/specialized/getpeercred.cpp
+    ../pdtk/specialized/peercred.cpp \
+    ../pdtk/specialized/procstat.cpp
 
 HEADERS += \
-    ../pdtk/cxxutils/vqueue.h \
+    ../pdtk/cxxutils/vfifo.h \
     ../pdtk/socket.h \
     ../pdtk/process.h \
     ../pdtk/cxxutils/posix_helpers.h \
@@ -39,5 +40,6 @@ HEADERS += \
     ../pdtk/object.h \
     ../pdtk/application.h \
     ../pdtk/specialized/eventbackend.h \
-    ../pdtk/specialized/getpeercred.h
+    ../pdtk/specialized/peercred.h \
+    ../pdtk/specialized/procstat.h
 }

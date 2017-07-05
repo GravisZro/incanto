@@ -10,7 +10,6 @@
 // incanto
 #include "code_printer/cpp.h"
 
-
 int main(int argc, char *argv[])
 {
   (void)argc;

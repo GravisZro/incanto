@@ -24,24 +24,24 @@ struct CppCodePrinter : CodePrinterBase
         << std::endl << "#include <sys/types.h>"
         << std::endl
         << std::endl << "// STL"
-        << std::endl << "#include <iostream>"
         << std::endl << "#include <vector>"
         << std::endl << "#include <cstdint>"
         << std::endl
         << std::endl << "// PDTK"
         << std::endl << "#include <socket.h>"
+        << std::endl << "#include <cxxutils/vfifo.h>"
         << std::endl << "#include <cxxutils/hashing.h>"
         << std::endl << "#include <cxxutils/posix_helpers.h>"
         << std::endl
-        << std::endl << "class RPC : public ClientSocket"
+        << std::endl << "class Incantor : public ClientSocket"
         << std::endl << "{"
         << std::endl << "public:"
         << std::endl << "  template<typename... Args>"
-        << std::endl << "  RPC(Args... args) : ClientSocket(args...)";
+        << std::endl << "  Incantor(Args... args) : ClientSocket(args...)";
     if(remote_functions.empty())
       out << " { }";
     else
-      out << std::endl << "  { Object::connect(newMessage, this, &RPC::receive); }";
+      out << std::endl << "  { Object::connect(newMessage, this, &Incantor::receive); }";
   }
 
   void print_close(void)
@@ -72,7 +72,7 @@ struct CppCodePrinter : CodePrinterBase
         out << " " << pos->name;
       }
 
-      out << ") { return call(\"" << func.name << "\", ";
+      out << ") { return incant(\"" << func.name << "\", ";
 
       int count = 0;
       for(auto& arg : func.arguments)
@@ -80,7 +80,7 @@ struct CppCodePrinter : CodePrinterBase
         if(is_fd(arg.type))
         {
           if(count)
-            throw(std::system_error(int(std::errc::invalid_argument), std::generic_category(), "only one file descriptor can be passed per call"));
+            throw(std::system_error(int(std::errc::invalid_argument), std::generic_category(), "Only one file descriptor can be passed per incantation."));
           ++count;
           out << arg.name;
         }
@@ -96,10 +96,10 @@ struct CppCodePrinter : CodePrinterBase
 
     out << std::endl << "private:"
         << std::endl << "  template<typename... ArgTypes>"
-        << std::endl << "  bool call(const char* func_name, posix::fd_t fd, ArgTypes&... args)"
+        << std::endl << "  bool incant(const char* func_name, posix::fd_t fd, ArgTypes&... args)"
         << std::endl << "  {"
         << std::endl << "    vfifo data;"
-        << std::endl << "    data.serialize(\"RPC\", func_name, signature, args...);"
+        << std::endl << "    data.serialize(\"RPC\", func_name, args...);"
         << std::endl << "    return write(data, fd);"
         << std::endl << "  }";
   }
@@ -134,7 +134,8 @@ struct CppCodePrinter : CodePrinterBase
 
     for(function_descriptor& func : local_functions)
     {
-      out << std::endl << "        case \"" << func.name << "\"_hash:";
+      out << std::endl << "        case \"" << func.name << "\"_hash:"
+          << std::endl << "        {";
 
       if(func.arguments.empty())
         out << std::endl << "          Object::enqueue(" << func.name << ");";
@@ -162,7 +163,8 @@ struct CppCodePrinter : CodePrinterBase
         }
         out << ");";
       }
-      out << std::endl << "          break;";
+      out << std::endl << "          }"
+          << std::endl << "          break;";
     }
     out << std::endl << "      }"
         << std::endl << "    }"
