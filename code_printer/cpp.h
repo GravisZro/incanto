@@ -28,20 +28,53 @@ struct CppCodePrinter : CodePrinterBase
         << std::endl << "#include <cstdint>"
         << std::endl
         << std::endl << "// PDTK"
+        << std::endl << "#include <object.h>"
         << std::endl << "#include <socket.h>"
         << std::endl << "#include <cxxutils/vfifo.h>"
         << std::endl << "#include <cxxutils/hashing.h>"
         << std::endl << "#include <cxxutils/posix_helpers.h>"
-        << std::endl
-        << std::endl << "class Incantor : public ClientSocket"
-        << std::endl << "{"
-        << std::endl << "public:"
-        << std::endl << "  template<typename... Args>"
-        << std::endl << "  Incantor(Args... args) : ClientSocket(args...)";
-    if(remote_functions.empty())
-      out << " { }";
+        << std::endl;
+    if(is_server)
+    {
+      out << std::endl << "class IncantoServer : public ServerSocket"
+          << std::endl << "{"
+          << std::endl << "public:"
+          << std::endl << "  template<typename... Args>"
+          << std::endl << "  IncantoServer(Args... args) : ServerSocket(args...)"
+          << std::endl << "  {"
+          << std::endl << "    Object::connect(newPeerRequest  , this, &IncantoServer::allowDeny);"
+          << std::endl << "    Object::connect(disconnectedPeer, this, &IncantoServer::removeEndpoint);"
+          << std::endl << "    Object::connect(newPeerMessage  , this, &IncantoServer::receive);"
+          << std::endl << "  }"
+          << std::endl
+          << std::endl << "  void allowDeny(posix::fd_t fd, posix::sockaddr_t addr, proccred_t cred)"
+          << std::endl << "  {"
+          << std::endl << "    if(REASON_TO_ACCEPT)"
+          << std::endl << "    {"
+          << std::endl << "      TRACK_NEW_ENDPOINT"
+          << std::endl << "      acceptPeerRequest(fd);"
+          << std::endl << "    }"
+          << std::endl << "    else"
+          << std::endl << "      rejectPeerRequest(fd);"
+          << std::endl << "  }"
+          << std::endl
+          << std::endl << "  void removeEndpoint(posix::fd_t fd)"
+          << std::endl << "  {"
+          << std::endl << "    REMOVE_ENDPOINT_TRACKING"
+          << std::endl << "  }";
+    }
     else
-      out << std::endl << "  { Object::connect(newMessage, this, &Incantor::receive); }";
+    {
+      out << std::endl << "class Incantor : public ClientSocket"
+          << std::endl << "{"
+          << std::endl << "public:"
+          << std::endl << "  template<typename... Args>"
+          << std::endl << "  Incantor(Args... args) : ClientSocket(args...)";
+      if(remote_functions.empty())
+        out << " { }";
+      else
+        out << std::endl << "  { Object::connect(newMessage, this, &Incantor::receive); }";
+    }
   }
 
   void print_close(void)
@@ -61,6 +94,10 @@ struct CppCodePrinter : CodePrinterBase
     for(function_descriptor& func : remote_functions)
     {
       out << std::endl << "  bool " << func.name << "(";
+
+      if(is_server)
+        func.arguments.push_front({"posix::fd_t", "client"});
+
       for(auto pos = func.arguments.begin(); pos != func.arguments.end(); ++pos)
       {
         if(pos != func.arguments.begin())
@@ -72,7 +109,10 @@ struct CppCodePrinter : CodePrinterBase
         out << " " << pos->name;
       }
 
-      out << ") { return incant(\"" << func.name << "\", ";
+      out << ") { return incant(" << (is_server ? "client, " : "") << '"' << func.name << "\", ";
+
+      if(is_server)
+        func.arguments.pop_front();
 
       int count = 0;
       for(auto& arg : func.arguments)
@@ -96,11 +136,11 @@ struct CppCodePrinter : CodePrinterBase
 
     out << std::endl << "private:"
         << std::endl << "  template<typename... ArgTypes>"
-        << std::endl << "  bool incant(const char* func_name, posix::fd_t fd, ArgTypes&... args)"
+        << std::endl << "  bool incant(" << (is_server ? "posix::fd_t client, " : "") << "const char* func_name, posix::fd_t fd, ArgTypes&... args)"
         << std::endl << "  {"
         << std::endl << "    vfifo data;"
         << std::endl << "    data.serialize(\"RPC\", func_name, args...);"
-        << std::endl << "    return write(data, fd);"
+        << std::endl << "    return write(" << (is_server ? "client, " : "") << "data, fd);"
         << std::endl << "  }";
   }
 
@@ -163,8 +203,8 @@ struct CppCodePrinter : CodePrinterBase
         }
         out << ");";
       }
-      out << std::endl << "          }"
-          << std::endl << "          break;";
+      out << std::endl << "        }"
+          << std::endl << "        break;";
     }
     out << std::endl << "      }"
         << std::endl << "    }"

@@ -28,26 +28,28 @@ struct CodePrinterBase
 
   std::fstream out;
   std::string relative_filename;
+  bool is_server;
   std::list<function_descriptor> local_functions;
   std::list<function_descriptor> remote_functions;
 
-  CodePrinterBase(void) { out.exceptions(std::ios_base::failbit | std::ios_base::badbit ); }
+  CodePrinterBase(void) : is_server(false) { out.exceptions(std::ios_base::failbit | std::ios_base::badbit ); }
   virtual ~CodePrinterBase(void) { }
 
   void file_open(std::string filename)
   {
-    if(::access(filename.c_str(), F_OK) == posix::success_response)
+    if(::access(filename.c_str(), F_OK) == posix::success_response) // if file exist
     {
-      if(::access(filename.c_str(), W_OK) == posix::error_response)
+      if(::access(filename.c_str(), W_OK) == posix::error_response) // if write access is denied
         throw(std::system_error(int(std::errc::permission_denied), std::generic_category()));
     }
-    else if(errno == std::errc::permission_denied)
-      throw(std::system_error(int(std::errc::permission_denied), std::generic_category()));
+    else if(errno == std::errc::permission_denied) // if permission denied to test file existence
+      throw(std::system_error(errno, std::generic_category()));
+    // else file not existing is ok ;)
 
     try { out.open(filename, std::ios_base::out | std::ios_base::trunc); }
     catch(...) { throw(std::system_error(int(std::errc::no_such_file_or_directory), std::generic_category())); }
 
-    std::size_t slash_pos = filename.rfind('/');
+    posix::size_t slash_pos = filename.rfind('/');
     if(slash_pos != std::string::npos)
     {
       relative_filename = filename.substr(slash_pos + 1);
