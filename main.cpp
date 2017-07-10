@@ -23,12 +23,16 @@ int main(int argc, char *argv[])
 
   if(printer != nullptr)
   {
-    printer->is_server = true;
+    printer->is_server = false;
     printer->local_functions .push_back({"setValueCall"   , {{"std::string", "key"}, {"std::string", "value"}}});
     printer->local_functions .push_back({"getValueCall"   , {{"std::string", "key"}}});
+    printer->local_functions .push_back({"getAllCall"     , {}});
 
     printer->remote_functions.push_back({"setValueReturn" , {{"int", "errcode"}}});
     printer->remote_functions.push_back({"getValueReturn" , {{"std::string", "value"}}});
+    printer->remote_functions.push_back({"getAllReturn"   , {{"std::unordered_map<std::string, std::string>", "values"}}});
+
+    std::swap(printer->local_functions, printer->remote_functions);
 
     try
     {
