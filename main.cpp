@@ -24,6 +24,7 @@ int main(int argc, char *argv[])
   if(printer != nullptr)
   {
     printer->is_server = true;
+    printer->local_functions.push_back({"configUpdated"  , {}});
     printer->local_functions.push_back({"setValueReturn" , {{"int", "errcode"}}});
     printer->local_functions.push_back({"getValueReturn" , {{"std::string", "value"}}});
     printer->local_functions.push_back({"getAllReturn"   , {{"std::unordered_map<std::string, std::string>", "values"}}});
@@ -38,8 +39,8 @@ int main(int argc, char *argv[])
     try
     {
       printer->file_open(filename);
-      printer->print_local();
       printer->print_remote();
+      printer->print_local();
       printer->file_close();
       std::cout << "success!" << std::endl;
     }
