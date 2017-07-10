@@ -26,7 +26,6 @@ struct CppCodePrinter : CodePrinterBase
         << std::endl << "// STL"
         << std::endl << "#include <vector>"
         << std::endl << "#include <cstdint>"
-        << std::endl << "#include <cassert>"
         << std::endl
         << std::endl << "// PDTK"
         << std::endl << "#include <object.h>"
@@ -37,42 +36,35 @@ struct CppCodePrinter : CodePrinterBase
         << std::endl;
     if(is_server)
     {
-      out << std::endl << "class IncantoServer : public ServerSocket"
+      out << std::endl << "class IncantoServerInterface : public ServerSocket"
           << std::endl << "{"
           << std::endl << "public:"
-          << std::endl << "  IncantoServer(void)"
+          << std::endl << "  IncantoServerInterface(void) noexcept"
           << std::endl << "  {"
-          << std::endl << "    Object::connect(newPeerRequest  , this, &IncantoServer::allowDeny);"
-          << std::endl << "    Object::connect(disconnectedPeer, this, &IncantoServer::removeEndpoint);"
-          << std::endl << "    Object::connect(newPeerMessage  , this, &IncantoServer::receive);"
+          << std::endl << "    Object::connect(newPeerRequest, this, &IncantoServerInterface::request);"
+          << std::endl << "    Object::connect(newPeerMessage, this, &IncantoServerInterface::receive);"
           << std::endl << "  }"
           << std::endl
-          << std::endl << "  void allowDeny(posix::fd_t fd, posix::sockaddr_t addr, proccred_t cred)"
+          << std::endl << "  virtual bool peerChooser(posix::fd_t socket, const posix::sockaddr_t& addr, const proccred_t& cred) noexcept = 0;"
+          << std::endl
+          << std::endl << "  void request(posix::fd_t socket, posix::sockaddr_t addr, proccred_t cred) noexcept"
           << std::endl << "  {"
-          << std::endl << "    if(REASON_TO_ACCEPT)"
-          << std::endl << "    {"
-          << std::endl << "      TRACK_NEW_ENDPOINT"
-          << std::endl << "      acceptPeerRequest(fd);"
-          << std::endl << "    }"
+          << std::endl << "    if(peerChooser(socket, addr, cred))"
+          << std::endl << "      acceptPeerRequest(socket);"
           << std::endl << "    else"
-          << std::endl << "      rejectPeerRequest(fd);"
-          << std::endl << "  }"
-          << std::endl
-          << std::endl << "  void removeEndpoint(posix::fd_t fd)"
-          << std::endl << "  {"
-          << std::endl << "    REMOVE_ENDPOINT_TRACKING"
+          << std::endl << "      rejectPeerRequest(socket);"
           << std::endl << "  }";
     }
     else
     {
-      out << std::endl << "class Incantor : public ClientSocket"
+      out << std::endl << "class IncantoClientInterface : public ClientSocket"
           << std::endl << "{"
           << std::endl << "public:"
-          << std::endl << "  Incantor(void)";
+          << std::endl << "  IncantoClientInterface(void) noexcept";
       if(remote_functions.empty())
         out << " { }";
       else
-        out << std::endl << "  { Object::connect(newMessage, this, &Incantor::receive); }";
+        out << std::endl << "  { Object::connect(newMessage, this, &IncantoClientInterface::receive); }";
     }
   }
 
@@ -108,10 +100,16 @@ struct CppCodePrinter : CodePrinterBase
         out << " " << pos->name;
       }
 
-      out << ") { return incant(" << (is_server ? "socket, " : "") << '"' << func.name << "\", ";
+      out << ") const noexcept { return write(" << (is_server ? "socket, " : "") << "vfifo(\"RPC\", \"" << func.name << "\"";
 
       if(is_server)
         func.arguments.pop_front();
+
+      for(auto& arg : func.arguments)
+        if(!is_fd(arg.type))
+          out << ", " << arg.name;
+
+      out << "), ";
 
       int count = 0;
       for(auto& arg : func.arguments)
@@ -127,20 +125,8 @@ struct CppCodePrinter : CodePrinterBase
       if(!count)
         out << "posix::invalid_descriptor";
 
-      for(auto& arg : func.arguments)
-        if(!is_fd(arg.type))
-          out << ", " << arg.name;
       out << "); }";
     }
-
-    out << std::endl << "private:"
-        << std::endl << "  template<typename... ArgTypes>"
-        << std::endl << "  bool incant(" << (is_server ? "posix::fd_t socket, " : "") << "const char* func_name, posix::fd_t fd, ArgTypes&... args)"
-        << std::endl << "  {"
-        << std::endl << "    vfifo data;"
-        << std::endl << "    data.serialize(\"RPC\", func_name, args...);"
-        << std::endl << "    return write(" << (is_server ? "socket, " : "") << "data, fd);"
-        << std::endl << "  }";
   }
 
   void print_local(void)
@@ -161,9 +147,9 @@ struct CppCodePrinter : CodePrinterBase
     }
 
     out << std::endl << "private:"
-        << std::endl << "  void receive(posix::fd_t socket, vfifo buffer, posix::fd_t fd)"
+        << std::endl << "  void receive(posix::fd_t socket, vfifo buffer, posix::fd_t fd) noexcept"
         << std::endl << "  {"
-        << std::endl << "    assert(m_socket == socket);"
+        << std::endl << "    (void)fd;"
         << std::endl << "    std::string str;"
         << std::endl << "    if(!(buffer >> str).hadError() && str == \"RPC\")"
         << std::endl << "    {"
