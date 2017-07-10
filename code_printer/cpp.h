@@ -96,7 +96,7 @@ struct CppCodePrinter : CodePrinterBase
       out << std::endl << "  bool " << func.name << "(";
 
       if(is_server)
-        func.arguments.push_front({"posix::fd_t", "client"});
+        func.arguments.push_front({"posix::fd_t", "socket"});
 
       for(auto pos = func.arguments.begin(); pos != func.arguments.end(); ++pos)
       {
@@ -109,7 +109,7 @@ struct CppCodePrinter : CodePrinterBase
         out << " " << pos->name;
       }
 
-      out << ") { return incant(" << (is_server ? "client, " : "") << '"' << func.name << "\", ";
+      out << ") { return incant(" << (is_server ? "socket, " : "") << '"' << func.name << "\", ";
 
       if(is_server)
         func.arguments.pop_front();
@@ -136,11 +136,11 @@ struct CppCodePrinter : CodePrinterBase
 
     out << std::endl << "private:"
         << std::endl << "  template<typename... ArgTypes>"
-        << std::endl << "  bool incant(" << (is_server ? "posix::fd_t client, " : "") << "const char* func_name, posix::fd_t fd, ArgTypes&... args)"
+        << std::endl << "  bool incant(" << (is_server ? "posix::fd_t socket, " : "") << "const char* func_name, posix::fd_t fd, ArgTypes&... args)"
         << std::endl << "  {"
         << std::endl << "    vfifo data;"
         << std::endl << "    data.serialize(\"RPC\", func_name, args...);"
-        << std::endl << "    return write(" << (is_server ? "client, " : "") << "data, fd);"
+        << std::endl << "    return write(" << (is_server ? "socket, " : "") << "data, fd);"
         << std::endl << "  }";
   }
 
@@ -151,20 +151,16 @@ struct CppCodePrinter : CodePrinterBase
     out << std::endl << "public:";
     for(function_descriptor& func : local_functions)
     {
-      out << std::endl << "  signal<";
-
+      out << std::endl << "  signal<posix::fd_t";
       for(auto pos = func.arguments.begin(); pos != func.arguments.end(); ++pos)
-      {
-        if(pos != func.arguments.begin())
-          out << ", ";
-        out << pos->type;
-      }
+        out << ", " << pos->type;
       out << "> " << func.name << ";";
     }
 
     out << std::endl << "private:"
-        << std::endl << "  void receive(posix::fd_t server, vfifo buffer, posix::fd_t fd)"
+        << std::endl << "  void receive(posix::fd_t socket, vfifo buffer, posix::fd_t fd)"
         << std::endl << "  {"
+        << std::endl << "    assert(m_socket == socket);"
         << std::endl << "    std::string str;"
         << std::endl << "    if(!(buffer >> str).hadError() && str == \"RPC\")"
         << std::endl << "    {"
@@ -192,7 +188,7 @@ struct CppCodePrinter : CodePrinterBase
             out << " >> val." << arg.name;
         out << ";";
         out << std::endl << "          if(!buffer.hadError())"
-            << std::endl << "            Object::enqueue(" << func.name;
+            << std::endl << "            Object::enqueue(" << func.name << ", socket";
 
         for(auto& arg : func.arguments)
         {
