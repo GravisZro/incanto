@@ -23,16 +23,17 @@ int main(int argc, char *argv[])
 
   if(printer != nullptr)
   {
-    printer->is_server = false;
-    printer->local_functions .push_back({"setValueCall"   , {{"std::string", "key"}, {"std::string", "value"}}});
-    printer->local_functions .push_back({"getValueCall"   , {{"std::string", "key"}}});
-    printer->local_functions .push_back({"getAllCall"     , {}});
+    printer->is_server = true;
+    printer->local_functions.push_back({"setValueReturn" , {{"int", "errcode"}}});
+    printer->local_functions.push_back({"getValueReturn" , {{"std::string", "value"}}});
+    printer->local_functions.push_back({"getAllReturn"   , {{"std::unordered_map<std::string, std::string>", "values"}}});
 
-    printer->remote_functions.push_back({"setValueReturn" , {{"int", "errcode"}}});
-    printer->remote_functions.push_back({"getValueReturn" , {{"std::string", "value"}}});
-    printer->remote_functions.push_back({"getAllReturn"   , {{"std::unordered_map<std::string, std::string>", "values"}}});
+    printer->remote_functions.push_back({"setValueCall"   , {{"std::string", "key"}, {"std::string", "value"}}});
+    printer->remote_functions.push_back({"getValueCall"   , {{"std::string", "key"}}});
+    printer->remote_functions.push_back({"getAllCall"     , {}});
 
-    std::swap(printer->local_functions, printer->remote_functions);
+    if(printer->is_server)
+      std::swap(printer->local_functions, printer->remote_functions);
 
     try
     {

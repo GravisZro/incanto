@@ -26,6 +26,7 @@ struct CppCodePrinter : CodePrinterBase
         << std::endl << "// STL"
         << std::endl << "#include <vector>"
         << std::endl << "#include <cstdint>"
+        << std::endl << "#include <cassert>"
         << std::endl
         << std::endl << "// PDTK"
         << std::endl << "#include <object.h>"
@@ -39,8 +40,7 @@ struct CppCodePrinter : CodePrinterBase
       out << std::endl << "class IncantoServer : public ServerSocket"
           << std::endl << "{"
           << std::endl << "public:"
-          << std::endl << "  template<typename... Args>"
-          << std::endl << "  IncantoServer(Args... args) : ServerSocket(args...)"
+          << std::endl << "  IncantoServer(void)"
           << std::endl << "  {"
           << std::endl << "    Object::connect(newPeerRequest  , this, &IncantoServer::allowDeny);"
           << std::endl << "    Object::connect(disconnectedPeer, this, &IncantoServer::removeEndpoint);"
@@ -68,8 +68,7 @@ struct CppCodePrinter : CodePrinterBase
       out << std::endl << "class Incantor : public ClientSocket"
           << std::endl << "{"
           << std::endl << "public:"
-          << std::endl << "  template<typename... Args>"
-          << std::endl << "  Incantor(Args... args) : ClientSocket(args...)";
+          << std::endl << "  Incantor(void)";
       if(remote_functions.empty())
         out << " { }";
       else
@@ -151,9 +150,13 @@ struct CppCodePrinter : CodePrinterBase
     out << std::endl << "public:";
     for(function_descriptor& func : local_functions)
     {
-      out << std::endl << "  signal<posix::fd_t";
+      out << std::endl << "  signal<" << (is_server ? "posix::fd_t" : "");
       for(auto pos = func.arguments.begin(); pos != func.arguments.end(); ++pos)
-        out << ", " << pos->type;
+      {
+        if(is_server || pos != func.arguments.begin())
+          out << ", ";
+        out << pos->type;
+      }
       out << "> " << func.name << ";";
     }
 
@@ -174,7 +177,7 @@ struct CppCodePrinter : CodePrinterBase
           << std::endl << "        {";
 
       if(func.arguments.empty())
-        out << std::endl << "          Object::enqueue(" << func.name << ");";
+        out << std::endl << "          Object::enqueue(" << func.name  << (is_server ? ", socket" : "") << ");";
       else
       {
         out << std::endl << "          struct { ";
@@ -188,7 +191,7 @@ struct CppCodePrinter : CodePrinterBase
             out << " >> val." << arg.name;
         out << ";";
         out << std::endl << "          if(!buffer.hadError())"
-            << std::endl << "            Object::enqueue(" << func.name << ", socket";
+            << std::endl << "            Object::enqueue(" << func.name  << (is_server ? ", socket" : "");
 
         for(auto& arg : func.arguments)
         {
