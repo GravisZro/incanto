@@ -45,11 +45,12 @@ struct CppCodePrinter : CodePrinterBase
           << std::endl << "    Object::connect(newPeerMessage, this, &IncantoServerInterface::receive);"
           << std::endl << "  }"
           << std::endl
-          << std::endl << "  virtual bool peerChooser(posix::fd_t socket, const posix::sockaddr_t& addr, const proccred_t& cred) noexcept = 0;"
+          << std::endl << "  virtual bool peerChooser(posix::fd_t socket, const proccred_t& cred) noexcept = 0;"
           << std::endl
           << std::endl << "  void request(posix::fd_t socket, posix::sockaddr_t addr, proccred_t cred) noexcept"
           << std::endl << "  {"
-          << std::endl << "    if(peerChooser(socket, addr, cred))"
+          << std::endl << "    (void)addr;"
+          << std::endl << "    if(peerChooser(socket, cred))"
           << std::endl << "      acceptPeerRequest(socket);"
           << std::endl << "    else"
           << std::endl << "      rejectPeerRequest(socket);"
