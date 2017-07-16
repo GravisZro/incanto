@@ -12,6 +12,42 @@
 // PDTK
 #include <cxxutils/posix_helpers.h>
 
+enum class direction
+{
+  none = 0,
+  in,
+  out,
+  inout,
+  outin,
+};
+
+direction inverse(direction dir)
+{
+  switch (dir)
+  {
+    case direction::in:    return direction::out;
+    case direction::out:   return direction::in;
+    case direction::inout: return direction::outin;
+    case direction::outin: return direction::inout;
+    default: return direction::none;
+  }
+}
+
+std::string func_name(std::string name, direction dir, bool is_local)
+{
+  switch (dir)
+  {
+    case direction::inout:
+      return name + (is_local ? "Call" : "Return");
+    case direction::outin:
+      return name + (is_local ? "Return" : "Call");
+    default: return name;
+  }
+}
+
+
+
+
 struct CodePrinterBase
 {
   struct argument_t
@@ -20,22 +56,50 @@ struct CodePrinterBase
     std::string name;
   };
 
-  struct function_descriptor
+  struct directional_function
   {
     std::string name;
     std::list<argument_t> arguments;
   };
 
+  struct function_descriptor
+  {
+    directional_function remote;
+    directional_function local;
+    direction dir;
+  };
+
+  std::string remote_name(function_descriptor func)
+  { return func_name(func.remote.name, func.dir, false); }
+
+  std::string local_name(function_descriptor func)
+  { return func_name(func.local.name, func.dir, true); }
+
   std::fstream out;
   std::string relative_filename;
   bool is_server;
-  std::list<function_descriptor> local_functions;
-  std::list<function_descriptor> remote_functions;
+  std::list<function_descriptor> functions;
 
   CodePrinterBase(void) : is_server(false) { out.exceptions(std::ios_base::failbit | std::ios_base::badbit ); }
   virtual ~CodePrinterBase(void) { }
 
-  void file_open(std::string filename)
+  bool have_local(void)
+  {
+    for(auto& func : functions)
+      if(!func.local.name.empty())
+        return true;
+    return false;
+  }
+
+  bool have_remote(void)
+  {
+    for(auto& func : functions)
+      if(!func.remote.name.empty())
+        return true;
+    return false;
+  }
+
+  void writeFile(std::string filename)
   {
     if(::access(filename.c_str(), F_OK) == posix::success_response) // if file exist
     {
@@ -53,20 +117,12 @@ struct CodePrinterBase
     if(slash_pos != std::string::npos)
     {
       relative_filename = filename.substr(slash_pos + 1);
-      print_open();
+      print();
     }
-  }
-
-  void file_close(void)
-  {
-    print_close();
     out.close();
   }
 
-  virtual void print_open  (void) = 0;
-  virtual void print_close (void) = 0;
-  virtual void print_local (void) = 0;
-  virtual void print_remote(void) = 0;
+  virtual void print(void) = 0;
 };
 
 

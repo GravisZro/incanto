@@ -24,25 +24,42 @@ int main(int argc, char *argv[])
   if(printer != nullptr)
   {
     printer->is_server = true;
-    printer->local_functions.push_back({"configUpdated", {}});
-    printer->local_functions.push_back({"setReturn"    , {{"int", "errcode"}}});
-    printer->local_functions.push_back({"getReturn"    , {{"std::string", "value"}}});
-    printer->local_functions.push_back({"getAllReturn" , {{"std::unordered_map<std::string, std::string>", "values"}}});
+    printer->functions.push_back({
+                                   { },
+                                   { "configUpdated", {}},
+                                   direction::out,
+                                 });
 
-    printer->remote_functions.push_back({"setCall"   , {{"std::string", "key"}, {"std::string", "value"}}});
-    printer->remote_functions.push_back({"unsetCall" , {{"std::string", "key"}}});
-    printer->remote_functions.push_back({"getCall"   , {{"std::string", "key"}}});
-    printer->remote_functions.push_back({"getAllCall", {}});
+    printer->functions.push_back({
+                                   { "set", {{"std::string", "key"}, {"std::string", "value"}}},
+                                   { "set", {{"int", "errcode"}}},
+                                   direction::outin,
+                                 });
+
+    printer->functions.push_back({
+                                   { "get", {{"std::string", "key"}}},
+                                   { "get", {{"std::string", "value"}}},
+                                   direction::outin,
+                                 });
+
+    printer->functions.push_back({
+                                   { "unset", {{"std::string", "key"}}},
+                                   { },
+                                   direction::in,
+                                 });
 
     if(printer->is_server)
-      std::swap(printer->local_functions, printer->remote_functions);
+    {
+      for(auto& func : printer->functions)
+      {
+        std::swap(func.local, func.remote);
+        func.dir = inverse(func.dir);
+      }
+    }
 
     try
     {
-      printer->file_open(filename);
-      printer->print_remote();
-      printer->print_local();
-      printer->file_close();
+      printer->writeFile(filename);
       std::cout << "success!" << std::endl;
     }
     catch(std::system_error e) { std::cout << "error: " << e.what() << std::endl; }

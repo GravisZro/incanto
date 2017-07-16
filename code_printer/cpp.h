@@ -7,10 +7,11 @@
 
 struct CppCodePrinter : CodePrinterBase
 {
+  std::string classname;
   static inline bool is_fd(const std::string& str)
     { return str == "posix::fd_t" || str == "fd_t"; }
 
-  void print_open(void)
+  void print(void)
   {
     std::string header_name = relative_filename;
     std::transform(header_name.begin(), header_name.end(), header_name.begin(),
@@ -36,63 +37,68 @@ struct CppCodePrinter : CodePrinterBase
         << std::endl;
     if(is_server)
     {
-      out << std::endl << "class IncantoServerInterface : public ServerSocket"
+      classname = "IncantoServer";
+      out << std::endl << "class " << classname << " : public ServerSocket"
           << std::endl << "{"
           << std::endl << "public:"
-          << std::endl << "  IncantoServerInterface(void) noexcept"
+          << std::endl << "  " << classname << "(void) noexcept"
           << std::endl << "  {"
-          << std::endl << "    Object::connect(newPeerRequest, this, &IncantoServerInterface::request);"
-          << std::endl << "    Object::connect(newPeerMessage, this, &IncantoServerInterface::receive);"
+          << std::endl << "    Object::connect(newPeerRequest, this, &" << classname << "::request);"
+          << std::endl << "    Object::connect(newPeerMessage, this, &" << classname << "::receive);"
           << std::endl << "  }"
           << std::endl
-          << std::endl << "  virtual bool peerChooser(posix::fd_t socket, const proccred_t& cred) noexcept = 0;"
-          << std::endl
-          << std::endl << "  void request(posix::fd_t socket, posix::sockaddr_t addr, proccred_t cred) noexcept"
-          << std::endl << "  {"
-          << std::endl << "    (void)addr;"
-          << std::endl << "    if(peerChooser(socket, cred))"
-          << std::endl << "      acceptPeerRequest(socket);"
-          << std::endl << "    else"
-          << std::endl << "      rejectPeerRequest(socket);"
-          << std::endl << "  }";
+          << std::endl << "  bool peerChooser(posix::fd_t socket, const proccred_t& cred) noexcept;";
     }
     else
     {
-      out << std::endl << "class IncantoClientInterface : public ClientSocket"
+      classname = "IncantoClient";
+      out << std::endl << "class " << classname << " : public ClientSocket"
           << std::endl << "{"
           << std::endl << "public:"
-          << std::endl << "  IncantoClientInterface(void) noexcept";
-      if(remote_functions.empty())
-        out << " { }";
+          << std::endl << "  " << classname << "(void) noexcept";
+      if(have_remote())
+        out << std::endl << "  { Object::connect(newMessage, this, &" << classname << "::receive); }";
       else
-        out << std::endl << "  { Object::connect(newMessage, this, &IncantoClientInterface::receive); }";
+        out << " { }";
     }
-  }
 
-  void print_close(void)
-  {
-    out << std::endl << "};"
-        << std::endl
-        << std::endl << "#endif"
+    print_incantations();
+    out << std::endl
+        << std::endl << "private:";
+    print_declarations();
+
+    out << std::endl;
+
+    if(!have_local())
+      out << std::endl << "  void receive(posix::fd_t socket, vfifo buffer, posix::fd_t fd) noexcept;";
+    out << std::endl << "  void request(posix::fd_t socket, posix::sockaddr_t addr, proccred_t cred) noexcept;"
+        << std::endl << "};"
         << std::endl;
+
+
+    print_implementation();
+    out << std::endl << "#endif" << std::endl;
   }
 
-  void print_remote(void)
+  void print_incantations(void)
   {
-    if(remote_functions.empty())
+    if(!have_remote())
       return;
-    out << std::endl << "public:";
+    out << std::endl;
 
-    for(function_descriptor& func : remote_functions)
+    for(function_descriptor& func : functions)
     {
-      out << std::endl << "  bool " << func.name << "(";
+      if(func.remote.name.empty())
+        continue;
+
+      out << std::endl << "  bool " << remote_name(func) << "(";
 
       if(is_server)
-        func.arguments.push_front({"posix::fd_t", "socket"});
+        func.remote.arguments.push_front({"posix::fd_t", "socket"});
 
-      for(auto pos = func.arguments.begin(); pos != func.arguments.end(); ++pos)
+      for(auto pos = func.remote.arguments.begin(); pos != func.remote.arguments.end(); ++pos)
       {
-        if(pos != func.arguments.begin())
+        if(pos != func.remote.arguments.begin())
           out << ", ";
         out << "const " << pos->type;
         if(pos->type.find("<") != std::string::npos || // if template OR
@@ -101,19 +107,19 @@ struct CppCodePrinter : CodePrinterBase
         out << " " << pos->name;
       }
 
-      out << ") const noexcept { return write(" << (is_server ? "socket, " : "") << "vfifo(\"RPC\", \"" << func.name << "\"";
+      out << ") const noexcept { return write(" << (is_server ? "socket, " : "") << "vfifo(\"RPC\", \"" << remote_name(func) << "\"";
 
       if(is_server)
-        func.arguments.pop_front();
+        func.remote.arguments.pop_front();
 
-      for(auto& arg : func.arguments)
+      for(auto& arg : func.remote.arguments)
         if(!is_fd(arg.type))
           out << ", " << arg.name;
 
       out << "), ";
 
       int count = 0;
-      for(auto& arg : func.arguments)
+      for(auto& arg : func.remote.arguments)
       {
         if(is_fd(arg.type))
         {
@@ -130,71 +136,154 @@ struct CppCodePrinter : CodePrinterBase
     }
   }
 
-  void print_local(void)
+  void print_in_signals(void)
   {
-    if(local_functions.empty())
-      return;
-    out << std::endl << "public:";
-    for(function_descriptor& func : local_functions)
+    for(function_descriptor& func : functions)
     {
+      if(func.local.name.empty())
+        continue;
       out << std::endl << "  signal<" << (is_server ? "posix::fd_t" : "");
-      for(auto pos = func.arguments.begin(); pos != func.arguments.end(); ++pos)
+      for(auto pos = func.local.arguments.begin(); pos != func.local.arguments.end(); ++pos)
       {
-        if(is_server || pos != func.arguments.begin())
+        if(is_server || pos != func.local.arguments.begin())
           out << ", ";
         out << pos->type;
       }
-      out << "> " << func.name << ";";
+      out << "> " << local_name(func) << ";";
+    }
+  }
+
+  void print_declarations(void)
+  {
+    for(function_descriptor& func : functions)
+    {
+      if(func.local.name.empty())
+        continue;
+      out << std::endl << "  void " << local_name(func) << "(";
+      if(is_server)
+        out << "posix::fd_t socket";
+      for(auto pos = func.local.arguments.begin(); pos != func.local.arguments.end(); ++pos)
+      {
+        if(is_server || pos != func.local.arguments.begin())
+          out << ", ";
+        out << pos->type << "& " << pos->name;
+      }
+      out << ") noexcept;";
+    }
+  }
+
+  void print_implementation(void)
+  {
+    for(function_descriptor& func : functions)
+    {
+      if(func.local.name.empty())
+        continue;
+      out << std::endl << "void " << classname << "::" << local_name(func) << "(";
+      if(is_server)
+        out << "posix::fd_t socket";
+      for(auto pos = func.local.arguments.begin(); pos != func.local.arguments.end(); ++pos)
+      {
+        if(is_server || pos != func.local.arguments.begin())
+          out << ", ";
+        out << pos->type << "& " << pos->name;
+      }
+      out << ") noexcept"
+          << std::endl << "{";
+      if(func.dir == direction::inout &&
+         !func.remote.name.empty())
+      {
+        for(auto& arg : func.remote.arguments)
+          out << std::endl << "  " << arg.type << " " << arg.name << ";";
+
+        out << std::endl << std::endl << "  " << remote_name(func) << "(socket";
+
+        for(auto& arg : func.remote.arguments)
+          out << ", " << arg.name;
+        out << ");";
+      }
+      out << std::endl << "}" << std::endl;
     }
 
-    out << std::endl << "private:"
-        << std::endl << "  void receive(posix::fd_t socket, vfifo buffer, posix::fd_t fd) noexcept"
-        << std::endl << "  {"
-        << std::endl << "    (void)fd;"
-        << std::endl << "    std::string str;"
-        << std::endl << "    if(!(buffer >> str).hadError() && str == \"RPC\")"
-        << std::endl << "    {"
-        << std::endl << "      buffer >> str;"
-        << std::endl << "      switch(hash(str))"
-        << std::endl << "      {";
-
-    for(function_descriptor& func : local_functions)
+    if(is_server)
     {
-      out << std::endl << "        case \"" << func.name << "\"_hash:"
-          << std::endl << "        {";
+      out << std::endl
+          << std::endl << "bool " << classname << "::peerChooser(posix::fd_t socket, const proccred_t& cred) noexcept"
+          << std::endl << "{"
+          << std::endl << "  return true;"
+          << std::endl << "}"
+          << std::endl
+          << std::endl << "void " << classname << "::request(posix::fd_t socket, posix::sockaddr_t addr, proccred_t cred) noexcept"
+          << std::endl << "{"
+          << std::endl << "  (void)addr;"
+          << std::endl << "  if(peerChooser(socket, cred))"
+          << std::endl << "    acceptPeerRequest(socket);"
+          << std::endl << "  else"
+          << std::endl << "    rejectPeerRequest(socket);"
+          << std::endl << "}";
+    }
 
-      if(func.arguments.empty())
-        out << std::endl << "          Object::enqueue(" << func.name  << (is_server ? ", socket" : "") << ");";
+    if(!have_local())
+      return;
+
+    out << std::endl
+        << std::endl << "void " << classname << "::receive(posix::fd_t socket, vfifo buffer, posix::fd_t fd) noexcept"
+        << std::endl << "{"
+        << std::endl << "  (void)fd;"
+        << std::endl << "  std::string str;"
+        << std::endl << "  if(!(buffer >> str).hadError() && str == \"RPC\")"
+        << std::endl << "  {"
+        << std::endl << "    buffer >> str;"
+        << std::endl << "    switch(hash(str))"
+        << std::endl << "    {";
+
+    for(function_descriptor& func : functions)
+    {
+      if(func.local.name.empty())
+        continue;
+      out << std::endl << "      case \"" << local_name(func) << "\"_hash:"
+          << std::endl << "      {";
+
+      if(func.local.arguments.empty())
+      {
+        out << std::endl << "        " << local_name(func) << "(";
+        if(is_server)
+          out << "socket";
+        out << ");";
+      }
       else
       {
-        out << std::endl << "          struct { ";
-        for(auto& arg : func.arguments)
+        out << std::endl << "        struct { ";
+        for(auto& arg : func.local.arguments)
           if(!is_fd(arg.type))
             out << arg.type << " " << arg.name << "; ";
         out << "} val;"
-            << std::endl << "          buffer";
-        for(auto& arg : func.arguments)
+            << std::endl << "        buffer";
+        for(auto& arg : func.local.arguments)
           if(!is_fd(arg.type))
             out << " >> val." << arg.name;
-        out << ";";
-        out << std::endl << "          if(!buffer.hadError())"
-            << std::endl << "            Object::enqueue(" << func.name  << (is_server ? ", socket" : "");
+        out << ";"
+            << std::endl << "        if(!buffer.hadError())"
+            << std::endl << "          " << local_name(func) << "(";
+        if(is_server)
+          out << "socket";
 
-        for(auto& arg : func.arguments)
+        for(auto pos = func.local.arguments.begin(); pos != func.local.arguments.end(); ++pos)
         {
-          if(is_fd(arg.type))
-            out << ", fd";
+          if(is_server || pos != func.local.arguments.begin())
+            out << ", ";
+          if(is_fd(pos->type))
+            out << "fd";
           else
-            out << ", val." << arg.name;
+            out << "val." << pos->name;
         }
         out << ");";
       }
-      out << std::endl << "        }"
-          << std::endl << "        break;";
+      out << std::endl << "      }"
+          << std::endl << "      break;";
     }
-    out << std::endl << "      }"
-        << std::endl << "    }"
-        << std::endl << "  }";
+    out << std::endl << "    }"
+        << std::endl << "  }"
+        << std::endl << "}";
   }
 };
 
