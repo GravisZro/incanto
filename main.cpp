@@ -23,7 +23,7 @@ int main(int argc, char *argv[])
 
   if(printer != nullptr)
   {
-    printer->is_server = true;
+    printer->is_server = false;
     printer->functions.push_back({
                                    { },
                                    { "configUpdated", {}},
