@@ -46,20 +46,30 @@ std::string func_name(std::string name, direction dir, bool is_local)
 }
 
 
-
-
 struct CodePrinterBase
 {
   struct argument_t
   {
     std::string type;
     std::string name;
+
+    void clear(void)
+    {
+      type.clear();
+      name.clear();
+    }
   };
 
   struct directional_function
   {
     std::string name;
     std::list<argument_t> arguments;
+
+    void clear(void)
+    {
+      name.clear();
+      arguments.clear();
+    }
   };
 
   struct function_descriptor
@@ -67,6 +77,13 @@ struct CodePrinterBase
     directional_function remote;
     directional_function local;
     direction dir;
+
+    void clear(void)
+    {
+      dir = direction::none;
+      remote.clear();
+      local.clear();
+    }
   };
 
   std::string remote_name(function_descriptor func)
