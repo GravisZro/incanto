@@ -158,12 +158,8 @@ struct CodePrinterBase
     try { out.open(filename, std::ios_base::out | std::ios_base::trunc); }
     catch(...) { throw(std::system_error(int(std::errc::no_such_file_or_directory), std::generic_category())); }
 
-    posix::size_t slash_pos = filename.rfind('/');
-    if(slash_pos != std::string::npos)
-    {
-      relative_filename = filename.substr(slash_pos + 1);
-      print();
-    }
+    relative_filename = ::basename(const_cast<char*>(filename.data()));
+    print();
     out.close();
   }
 

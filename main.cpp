@@ -339,6 +339,7 @@ int main(int argc, char *argv[])
       file.read(raw_data, UINT16_MAX);
       data.append(raw_data, file.gcount());
     }
+    file.close();
 
     if(printer == nullptr)
       throw("unable to allocate code printer");
