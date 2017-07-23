@@ -303,18 +303,69 @@ std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
   return functions;
 }
 
+#define VERSION "0.1"
 
-
-int main(int argc, char *argv[])
+void usage(char* filename)
 {
-  (void)argc;
-  (void)argv;
+  std::cout << "Usage: " << basename(filename) << " -v -c -s -i <input_file> -o <ouput_file>"
+            << std::endl
+            << std::endl << "       " << "-v        print version and copyright information"
+            << std::endl << "       " << "-c        output client code"
+            << std::endl << "       " << "-s        output server code"
+            << std::endl << "       " << "-i file   input file"
+            << std::endl << "       " << "-i file   output file"
+            << std::endl;
+}
 
-  if(argc != 4 || (std::strcmp(argv[1], "client") && std::strcmp(argv[1], "server")))
+int main(int argc, char** argv)
+{
+  const char* input = nullptr;
+  const char* output = nullptr;
+  int perspective = 0;
+
+  for(int opt = 0; opt != -1; opt = ::getopt(argc, argv, "vcsi:o:"))
   {
-    std::cout << "Usage: " << basename(argv[0]) << " client [input_file] [ouput_file]" << std::endl
-              << "       " << basename(argv[0]) << " server [input_file] [ouput_file]" << std::endl;
-    return 0;
+    switch (opt)
+    {
+      case 0: break;
+
+      case 'v':
+        std::cout << "Incanto " << VERSION        << std::endl
+                  << "Copyright (c) 2017, Gravis" << std::endl
+                  << "All rights reserved."       << std::endl;
+        return EXIT_SUCCESS;
+
+      case 's':
+      case 'c':
+        perspective = opt;
+        break;
+
+      case 'i': input  = optarg; break;
+      case 'o': output = optarg; break;
+
+
+      default:
+        usage(argv[0]);
+        return EXIT_FAILURE;
+    }
+  }
+
+  for(;optind < argc; ++optind)
+  {
+    if(input == nullptr)
+      input = argv[optind];
+    else if(output == nullptr)
+      output = argv[optind];
+  }
+
+  if(!perspective ||
+     input == nullptr ||
+     output == nullptr)
+  {
+    std::cout << "oh snap" << std::endl;
+
+    usage(argv[0]);
+    return EXIT_FAILURE;
   }
 
 
@@ -322,7 +373,7 @@ int main(int argc, char *argv[])
 
   printer = std::make_unique<CppCodePrinter>();
 
-  printer->is_server = std::strcmp(argv[1], "server") == 0;
+  printer->is_server = perspective == 's';
 
   try
   {
@@ -330,7 +381,7 @@ int main(int argc, char *argv[])
     std::string data;
     std::fstream file;
 
-    file.open(argv[2], std::ios_base::in);
+    file.open(input, std::ios_base::in);
     if(!file.is_open())
       throw("unable to open input file");
 
@@ -368,12 +419,12 @@ int main(int argc, char *argv[])
 */
 //    std::cout << std::endl << "writing" << std::endl << std::endl;
 
-    printer->writeFile(argv[3]);
+    printer->writeFile(output);
     std::cout << "Done!" << std::endl;
   }
   catch(std::string str) { std::cout << "parser error: " << str << std::endl; }
   catch(std::system_error e) { std::cout << "error: " << e.what() << std::endl; }
   catch(...) { std::cout << "unexpected error!" << std::endl; }
 
-  return 0;
+  return EXIT_SUCCESS;
 }
