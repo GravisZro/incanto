@@ -5,6 +5,14 @@
 #include <algorithm>
 #include <system_error>
 
+#if 0
+#define SWAPIF(x, y)
+#else
+#define SWAPIF(x, y) \
+  if(func.dir == x || func.dir == y) \
+    std::swap(func.local_arguments, func.remote_arguments);
+#endif
+
 struct CppCodePrinter : CodePrinterBase
 {
   std::string classname;
@@ -87,17 +95,21 @@ struct CppCodePrinter : CodePrinterBase
 
     for(function_descriptor& func : functions)
     {
-      if(func.remote.name.empty())
+      if(func.dir == direction::in)
         continue;
+      SWAPIF(direction::out, direction::outin)
 
       out << std::endl << "  bool " << remote_name(func) << "(";
 
       if(is_server)
-        func.remote.arguments.push_front({"posix::fd_t", "socket"});
+        func.remote_arguments.push_front({"posix::fd_t", "socket"});
 
-      for(auto pos = func.remote.arguments.begin(); pos != func.remote.arguments.end(); ++pos)
+//      std::cout << (is_server ? "server " : "client ");
+//      func.print();
+
+      for(auto pos = func.remote_arguments.begin(); pos != func.remote_arguments.end(); ++pos)
       {
-        if(pos != func.remote.arguments.begin())
+        if(pos != func.remote_arguments.begin())
           out << ", ";
         out << "const " << pos->type;
         if(pos->type.find("<") != std::string::npos || // if template OR
@@ -109,16 +121,16 @@ struct CppCodePrinter : CodePrinterBase
       out << ") const noexcept { return write(" << (is_server ? "socket, " : "") << "vfifo(\"RPC\", \"" << remote_name(func) << "\"";
 
       if(is_server)
-        func.remote.arguments.pop_front();
+        func.remote_arguments.pop_front();
 
-      for(auto& arg : func.remote.arguments)
+      for(auto& arg : func.remote_arguments)
         if(!is_fd(arg.type))
           out << ", " << arg.name;
 
       out << "), ";
 
       int count = 0;
-      for(auto& arg : func.remote.arguments)
+      for(auto& arg : func.remote_arguments)
       {
         if(is_fd(arg.type))
         {
@@ -132,6 +144,8 @@ struct CppCodePrinter : CodePrinterBase
         out << "posix::invalid_descriptor";
 
       out << "); }";
+
+      SWAPIF(direction::out, direction::outin)
     }
   }
 
@@ -139,16 +153,20 @@ struct CppCodePrinter : CodePrinterBase
   {
     for(function_descriptor& func : functions)
     {
-      if(func.local.name.empty())
+      if(func.dir == direction::out)
         continue;
+      SWAPIF(direction::out, direction::outin)
+
       out << std::endl << "  signal<" << (is_server ? "posix::fd_t" : "");
-      for(auto pos = func.local.arguments.begin(); pos != func.local.arguments.end(); ++pos)
+      for(auto pos = func.local_arguments.begin(); pos != func.local_arguments.end(); ++pos)
       {
-        if(is_server || pos != func.local.arguments.begin())
+        if(is_server || pos != func.local_arguments.begin())
           out << ", ";
         out << pos->type;
       }
       out << "> " << local_name(func) << ";";
+
+      SWAPIF(direction::out, direction::outin)
     }
   }
 
@@ -156,18 +174,22 @@ struct CppCodePrinter : CodePrinterBase
   {
     for(function_descriptor& func : functions)
     {
-      if(func.local.name.empty())
+      if(func.dir == direction::out)
         continue;
+      SWAPIF(direction::out, direction::outin)
+
       out << std::endl << "  void " << local_name(func) << "(";
       if(is_server)
         out << "posix::fd_t socket";
-      for(auto pos = func.local.arguments.begin(); pos != func.local.arguments.end(); ++pos)
+      for(auto pos = func.local_arguments.begin(); pos != func.local_arguments.end(); ++pos)
       {
-        if(is_server || pos != func.local.arguments.begin())
+        if(is_server || pos != func.local_arguments.begin())
           out << ", ";
         out << pos->type << "& " << pos->name;
       }
       out << ") noexcept;";
+
+      SWAPIF(direction::out, direction::outin)
     }
   }
 
@@ -175,32 +197,35 @@ struct CppCodePrinter : CodePrinterBase
   {
     for(function_descriptor& func : functions)
     {
-      if(func.local.name.empty())
+      if(func.dir == direction::out)
         continue;
+      SWAPIF(direction::out, direction::outin)
+
       out << std::endl << "void " << classname << "::" << local_name(func) << "(";
       if(is_server)
         out << "posix::fd_t socket";
-      for(auto pos = func.local.arguments.begin(); pos != func.local.arguments.end(); ++pos)
+      for(auto pos = func.local_arguments.begin(); pos != func.local_arguments.end(); ++pos)
       {
-        if(is_server || pos != func.local.arguments.begin())
+        if(is_server || pos != func.local_arguments.begin())
           out << ", ";
         out << pos->type << "& " << pos->name;
       }
       out << ") noexcept"
           << std::endl << "{";
-      if(func.dir == direction::inout &&
-         !func.remote.name.empty())
+      if(func.dir == direction::inout)
       {
-        for(auto& arg : func.remote.arguments)
+        for(auto& arg : func.remote_arguments)
           out << std::endl << "  " << arg.type << " " << arg.name << ";";
 
         out << std::endl << std::endl << "  " << remote_name(func) << "(socket";
 
-        for(auto& arg : func.remote.arguments)
+        for(auto& arg : func.remote_arguments)
           out << ", " << arg.name;
         out << ");";
       }
       out << std::endl << "}" << std::endl;
+
+      SWAPIF(direction::out, direction::outin)
     }
 
     if(is_server)
@@ -237,12 +262,14 @@ struct CppCodePrinter : CodePrinterBase
 
     for(function_descriptor& func : functions)
     {
-      if(func.local.name.empty())
+      if(func.dir == direction::out)
         continue;
+      SWAPIF(direction::out, direction::outin)
+
       out << std::endl << "      case \"" << local_name(func) << "\"_hash:"
           << std::endl << "      {";
 
-      if(func.local.arguments.empty())
+      if(func.local_arguments.empty())
       {
         out << std::endl << "        " << local_name(func) << "(";
         if(is_server)
@@ -252,12 +279,12 @@ struct CppCodePrinter : CodePrinterBase
       else
       {
         out << std::endl << "        struct { ";
-        for(auto& arg : func.local.arguments)
+        for(auto& arg : func.local_arguments)
           if(!is_fd(arg.type))
             out << arg.type << " " << arg.name << "; ";
         out << "} val;"
             << std::endl << "        buffer";
-        for(auto& arg : func.local.arguments)
+        for(auto& arg : func.local_arguments)
           if(!is_fd(arg.type))
             out << " >> val." << arg.name;
         out << ";"
@@ -266,9 +293,9 @@ struct CppCodePrinter : CodePrinterBase
         if(is_server)
           out << "socket";
 
-        for(auto pos = func.local.arguments.begin(); pos != func.local.arguments.end(); ++pos)
+        for(auto pos = func.local_arguments.begin(); pos != func.local_arguments.end(); ++pos)
         {
-          if(is_server || pos != func.local.arguments.begin())
+          if(is_server || pos != func.local_arguments.begin())
             out << ", ";
           if(is_fd(pos->type))
             out << "fd";
@@ -279,6 +306,8 @@ struct CppCodePrinter : CodePrinterBase
       }
       out << std::endl << "      }"
           << std::endl << "      break;";
+
+      SWAPIF(direction::out, direction::outin)
     }
     out << std::endl << "    }"
         << std::endl << "  }"

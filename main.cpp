@@ -1,8 +1,13 @@
 // STL
+#include <fstream>
 #include <iostream>
+#include <iomanip>
 #include <memory>
 #include <string>
 #include <functional>
+
+// POSIX
+#include <libgen.h>
 
 // PDTK
 #include <cxxutils/hashing.h>
@@ -85,18 +90,10 @@ std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
         {
           switch(hash(str))
           {
-            case "in"_hash:
-              func.dir = direction::in;
-              break;
-            case "out"_hash:
-              func.dir = direction::out;
-              break;
-            case "inout"_hash:
-              func.dir = direction::inout;
-              break;
-            case "outin"_hash:
-              func.dir = direction::outin;
-              break;
+            case "in"_hash:    func.dir = direction::in;    break;
+            case "out"_hash:   func.dir = direction::out;   break;
+            case "inout"_hash: func.dir = direction::inout; break;
+            case "outin"_hash: func.dir = direction::outin; break;
             default:
               throw(std::string("unknown direction: '").append(str).append("'"));
           }
@@ -135,8 +132,10 @@ std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
             {
               arg.type = str;
               str.clear();
-              func.remote.arguments.push_back(arg);
+              arguments.push_back(arg);
               arg.clear();
+              func.remote_arguments = arguments;
+              arguments.clear();
             }
             state = state_e::funcName;
             break;
@@ -230,20 +229,28 @@ std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
         break;
 
       case state_e::retListEnd:
-        func.remote.arguments = arguments;
+/*
+        if(func.dir == direction::out || func.dir == direction::outin)
+          func.local_arguments = arguments;
+        else
+          func.remote_arguments = arguments;
+*/
+        func.remote_arguments = arguments;
         arguments.clear();
         state = state_e::funcName;
         break;
 
       case state_e::argListEnd:
-        func.local.arguments = arguments;
+/*
+        if(func.dir == direction::out || func.dir == direction::outin)
+          func.remote_arguments = arguments;
+        else
+          func.local_arguments = arguments;
+*/
+        func.local_arguments = arguments;
         arguments.clear();
         if(inverted)
-        {
-          std::swap(func.local, func.remote);
           func.dir = inverse(func.dir);
-          inverted = false;
-        }
         functions.push_back(func);
         func.clear();
         state = state_e::origin;
@@ -261,8 +268,8 @@ std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
           case '\r':
           case '\t':
           case '\v':
-            func.remote.name = str;
-            func.local.name = str;
+            func.name = str;
+            func.name = str;
             str.clear();
             state = state_e::funcNameEnd;
             break;
@@ -303,93 +310,69 @@ int main(int argc, char *argv[])
   (void)argc;
   (void)argv;
 
-  std::unique_ptr<CodePrinterBase> printer;
+  if(argc != 4 || (std::strcmp(argv[1], "client") && std::strcmp(argv[1], "server")))
+  {
+    std::cout << "Usage: " << basename(argv[0]) << " client [input_file] [ouput_file]" << std::endl
+              << "       " << basename(argv[0]) << " server [input_file] [ouput_file]" << std::endl;
+    return 0;
+  }
 
-  std::string filename = "/tmp/demo-file.h";
+
+  std::unique_ptr<CodePrinterBase> printer;
 
   printer = std::make_unique<CppCodePrinter>();
 
+  printer->is_server = std::strcmp(argv[1], "server") == 0;
+
   try
   {
+    char raw_data[UINT16_MAX] = { 0 };
+    std::string data;
+    std::fstream file;
+
+    file.open(argv[2], std::ios_base::in);
+    if(!file.is_open())
+      throw("unable to open input file");
+
+    while(!file.eof())
+    {
+      file.read(raw_data, UINT16_MAX);
+      data.append(raw_data, file.gcount());
+    }
+
     if(printer == nullptr)
       throw("unable to allocate code printer");
-    printer->is_server = true;
+    /*
     std::string data = "  server out   void configUpdated(void);\n"
                        "  server inout {int errcode} unset(std::string key);\n"
                        "  server inout {int errcode} set(std::string key, std::string value);\n"
                        "  server inout {int errcode, std::string value} get(std::string key);\n";
+                       */
     printer->functions = parser(data);
 
-    if(printer->is_server)
+    if(!printer->is_server)
     {
-      for(auto& func : printer->functions)
-        if(func.local.arguments.empty())
-          func.local.name.clear();
-    }
-    else
-    {
+//      std::cout << "inverting for client" << std::endl;
       for(auto& func : printer->functions)
       {
-        std::swap(func.local, func.remote);
         func.dir = inverse(func.dir);
       }
-
-      for(auto& func : printer->functions)
-        if(func.remote.arguments.empty())
-          func.remote.name.clear();
     }
+/*
+    for(auto& func : printer->functions)
+    {
+      std::cout << (printer->is_server ? "server " : "client ");
+      func.print();
+    }
+*/
+//    std::cout << std::endl << "writing" << std::endl << std::endl;
 
-    printer->writeFile(filename);
-    std::cout << "success!" << std::endl;
+    printer->writeFile(argv[3]);
+    std::cout << "Done!" << std::endl;
   }
   catch(std::string str) { std::cout << "parser error: " << str << std::endl; }
   catch(std::system_error e) { std::cout << "error: " << e.what() << std::endl; }
   catch(...) { std::cout << "unexpected error!" << std::endl; }
-/*
-  if(printer != nullptr)
-  {
-    printer->is_server = false;
-    printer->functions.push_back({
-                                   { },
-                                   { "configUpdated", {}},
-                                   direction::out,
-                                 });
 
-    printer->functions.push_back({
-                                   { "set", {{"std::string", "key"}, {"std::string", "value"}}},
-                                   { "set", {{"int", "errcode"}}},
-                                   direction::outin,
-                                 });
-
-    printer->functions.push_back({
-                                   { "get", {{"std::string", "key"}}},
-                                   { "get", {{"std::string", "value"}}},
-                                   direction::outin,
-                                 });
-
-    printer->functions.push_back({
-                                   { "unset", {{"std::string", "key"}}},
-                                   { },
-                                   direction::in,
-                                 });
-
-    if(printer->is_server)
-    {
-      for(auto& func : printer->functions)
-      {
-        std::swap(func.local, func.remote);
-        func.dir = inverse(func.dir);
-      }
-    }
-
-    try
-    {
-      printer->writeFile(filename);
-      std::cout << "success!" << std::endl;
-    }
-    catch(std::system_error e) { std::cout << "error: " << e.what() << std::endl; }
-    catch(...) { std::cout << "unexpected error!" << std::endl; }
-  }
-*/
   return 0;
 }

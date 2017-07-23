@@ -60,37 +60,65 @@ struct CodePrinterBase
     }
   };
 
-  struct directional_function
-  {
-    std::string name;
-    std::list<argument_t> arguments;
-
-    void clear(void)
-    {
-      name.clear();
-      arguments.clear();
-    }
-  };
-
   struct function_descriptor
   {
-    directional_function remote;
-    directional_function local;
+    std::list<argument_t> remote_arguments;
+    std::list<argument_t> local_arguments;
+
+    std::string name;
     direction dir;
 
     void clear(void)
     {
       dir = direction::none;
-      remote.clear();
-      local.clear();
+      name.clear();
+      remote_arguments.clear();
+      local_arguments.clear();
     }
+/*
+    void print(void)
+    {
+      switch(dir)
+      {
+        case direction::in:    std::cout << "in    "; break;
+        case direction::out:   std::cout << "out   "; break;
+        case direction::inout: std::cout << "inout "; break;
+        case direction::outin: std::cout << "outin "; break;
+        default:
+          throw("oh shit");
+      }
+
+      if(name.empty() || remote_arguments.empty())
+        std::cout << "void ";
+      else
+      {
+        std::cout << "{ ";
+        for(auto& arg : remote_arguments)
+          std::cout << arg.type << " "  << arg.name << "; ";
+        std::cout << "} ";
+      }
+
+      std::cout << name << " ";
+
+      if(name.empty() || local_arguments.empty())
+        std::cout << "(void)";
+      else
+      {
+        std::cout << "( ";
+        for(auto& arg : local_arguments)
+          std::cout << arg.type << " "  << arg.name << ", ";
+        std::cout << ")";
+      }
+      std::cout << std::endl;
+    }
+*/
   };
 
   std::string remote_name(function_descriptor func)
-  { return func_name(func.remote.name, func.dir, false); }
+  { return func_name(func.name, func.dir, false); }
 
   std::string local_name(function_descriptor func)
-  { return func_name(func.local.name, func.dir, true); }
+  { return func_name(func.name, func.dir, true); }
 
   std::fstream out;
   std::string relative_filename;
@@ -103,7 +131,7 @@ struct CodePrinterBase
   bool have_local(void)
   {
     for(auto& func : functions)
-      if(!func.local.name.empty())
+      if(func.dir != direction::out)
         return true;
     return false;
   }
@@ -111,7 +139,7 @@ struct CodePrinterBase
   bool have_remote(void)
   {
     for(auto& func : functions)
-      if(!func.remote.name.empty())
+      if(func.dir != direction::in)
         return true;
     return false;
   }
