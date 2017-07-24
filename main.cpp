@@ -12,8 +12,8 @@
 // PDTK
 #include <cxxutils/hashing.h>
 
-// incanto
-#include "code_printer/cpp.h"
+// project files
+#include "pdtkgen.h"
 
 std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
 {
@@ -295,21 +295,24 @@ std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
 
 void usage(char* filename)
 {
-  std::cout
-      << "Usage: " << filename << " -c [-i] input_file [-o] output_file"  << std::endl
-      << "       " << filename << " -s [-i] input_file [-o] output_file"  << std::endl
-      << "       " << filename << " -v"                                   << std::endl
-      << "  -v        print version and copyright information"            << std::endl
-      << "  -c        generate client code"                               << std::endl
-      << "  -s        generate server code"                               << std::endl
-      << "  -i file   input filename"                                     << std::endl
-      << "  -o file   output filename"                                    << std::endl;
+  std::cout      << "Usage: " << filename << " -c [-t type] [-n name] [-i] FILE [-o] FILE"
+    << std::endl << "       " << filename << " -s [-t type] [-n name] [-i] FILE [-o] FILE"
+    << std::endl << "  -c        Generate client code."
+    << std::endl << "  -s        Generate server code."
+    << std::endl << "  -t type   Type of code to generate. Values: pdtk, qt, c, gtk, python, perl"
+    << std::endl << "  -n name   Name of the generated class/struct/module."
+    << std::endl << "  -i file   Input filename."
+    << std::endl << "  -o file   Output filename."
+    << std::endl << "  -v        Print version and copyright information."
+    << std::endl << "  -h        Print this help message.";
 }
 
 int main(int argc, char** argv)
 {
-  char* input = nullptr;
-  char* output = nullptr;
+  const char* input = nullptr;
+        char* output = nullptr; // not const due to use of basename()
+  const char* type = nullptr;
+  const char* name = nullptr;
   int perspective = 0;
 
   for(int opt = 0; opt != -1; opt = ::getopt(argc, argv, "vcsi:o:"))
@@ -330,6 +333,12 @@ int main(int argc, char** argv)
       case 'c': perspective = opt; break;
       case 'i': input  = optarg; break;
       case 'o': output = optarg; break;
+      case 't': type = optarg; break;
+      case 'n': name = optarg; break;
+
+      case 'h':
+        usage(basename(argv[0]));
+        return EXIT_SUCCESS;
       default:
         usage(basename(argv[0]));
         return EXIT_FAILURE;
@@ -352,12 +361,26 @@ int main(int argc, char** argv)
     return EXIT_FAILURE;
   }
 
-  std::unique_ptr<CodePrinterBase> printer;
-  printer = std::make_unique<CppCodePrinter>();
-  printer->is_server = perspective == 's';
+  if(type == nullptr) // default output type
+    type = "pdtk";
+  if(name == nullptr) // default name
+    name = perspective == 's' ? "IncantoServer" : "IncantoClient";
 
   try
   {
+    std::unique_ptr<CodePrinterBase> printer;
+    switch(hash(type))
+    {
+      case "pdtk"_hash: printer = std::make_unique<PdtkCodePrinter>(); break;
+      case "qt"_hash:     throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "Qt code generation backend is not implemented!"));
+      case "c"_hash:      throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "C code generation backend is not implemented!"));
+      case "gtk"_hash:    throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "GTK+ code generation backend is not implemented!"));
+      case "python"_hash: throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "Python code generation backend is not implemented!"));
+      case "perl"_hash:   throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "Perl code generation backend is not implemented!"));
+    }
+
+    printer->is_server = perspective == 's';
+
     char raw_data[UINT16_MAX] = { 0 };
     std::string data;
     std::fstream file;
