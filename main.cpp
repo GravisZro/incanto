@@ -304,7 +304,8 @@ void usage(char* filename)
     << std::endl << "  -i file   Input filename."
     << std::endl << "  -o file   Output filename."
     << std::endl << "  -v        Print version and copyright information."
-    << std::endl << "  -h        Print this help message.";
+    << std::endl << "  -h        Print this help message."
+    << std::endl;
 }
 
 int main(int argc, char** argv)
