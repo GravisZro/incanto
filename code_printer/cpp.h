@@ -1,5 +1,5 @@
-#ifndef CPP_H
-#define CPP_H
+#ifndef PDTKGEN_H
+#define PDTKGEN_H
 
 #include "base.h"
 #include <algorithm>
@@ -13,7 +13,7 @@
     std::swap(func.local_arguments, func.remote_arguments);
 #endif
 
-struct CppCodePrinter : CodePrinterBase
+struct PdtkCodePrinter : CodePrinterBase
 {
   std::string classname;
   static inline bool is_fd(const std::string& str)
@@ -315,4 +315,4 @@ struct CppCodePrinter : CodePrinterBase
   }
 };
 
-#endif // CPP_H
+#endif // PDTKGEN_H
