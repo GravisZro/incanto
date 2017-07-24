@@ -15,9 +15,8 @@ INCLUDEPATH += ../pdtk
 SOURCES = main.cpp
 
 HEADERS += \
-    code_printer.h \
-    code_printer/base.h \
-    code_printer/cpp.h
+    basegen.h \
+    pdtkgen.h
 
 # show these files but don't build them
 showem {
