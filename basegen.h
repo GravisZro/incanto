@@ -1,5 +1,5 @@
-#ifndef BASE_H
-#define BASE_H
+#ifndef BASEGEN_H
+#define BASEGEN_H
 
 // STL
 #include <string>
@@ -131,4 +131,4 @@ struct CodePrinterBase
 };
 
 
-#endif // BASE_H
+#endif // BASEGEN_H
