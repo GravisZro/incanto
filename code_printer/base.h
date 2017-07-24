@@ -75,43 +75,6 @@ struct CodePrinterBase
       remote_arguments.clear();
       local_arguments.clear();
     }
-/*
-    void print(void)
-    {
-      switch(dir)
-      {
-        case direction::in:    std::cout << "in    "; break;
-        case direction::out:   std::cout << "out   "; break;
-        case direction::inout: std::cout << "inout "; break;
-        case direction::outin: std::cout << "outin "; break;
-        default:
-          throw("oh shit");
-      }
-
-      if(name.empty() || remote_arguments.empty())
-        std::cout << "void ";
-      else
-      {
-        std::cout << "{ ";
-        for(auto& arg : remote_arguments)
-          std::cout << arg.type << " "  << arg.name << "; ";
-        std::cout << "} ";
-      }
-
-      std::cout << name << " ";
-
-      if(name.empty() || local_arguments.empty())
-        std::cout << "(void)";
-      else
-      {
-        std::cout << "( ";
-        for(auto& arg : local_arguments)
-          std::cout << arg.type << " "  << arg.name << ", ";
-        std::cout << ")";
-      }
-      std::cout << std::endl;
-    }
-*/
   };
 
   std::string remote_name(function_descriptor func)
@@ -144,21 +107,22 @@ struct CodePrinterBase
     return false;
   }
 
-  void writeFile(std::string filename)
+  void writeFile(char* filename)
   {
-    if(::access(filename.c_str(), F_OK) == posix::success_response) // if file exist
+    if(::access(filename, F_OK) == posix::success_response) // if file exist
     {
-      if(::access(filename.c_str(), W_OK) == posix::error_response) // if write access is denied
-        throw(std::system_error(int(std::errc::permission_denied), std::generic_category()));
+      if(::access(filename, W_OK) == posix::error_response) // if write access is denied
+        throw(std::system_error(errno, std::system_category()));
     }
     else if(errno == std::errc::permission_denied) // if permission denied to test file existence
-      throw(std::system_error(errno, std::generic_category()));
+      throw(std::system_error(errno, std::system_category()));
     // else file not existing is ok ;)
 
-    try { out.open(filename, std::ios_base::out | std::ios_base::trunc); }
-    catch(...) { throw(std::system_error(int(std::errc::no_such_file_or_directory), std::generic_category())); }
+    out.open(filename, std::ios_base::out | std::ios_base::trunc);
+    if(out.fail())
+      throw(std::system_error(int(std::errc::no_such_file_or_directory), std::system_category()));
 
-    relative_filename = ::basename(const_cast<char*>(filename.data()));
+    relative_filename = ::basename(filename);
     print();
     out.close();
   }

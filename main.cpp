@@ -229,24 +229,12 @@ std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
         break;
 
       case state_e::retListEnd:
-/*
-        if(func.dir == direction::out || func.dir == direction::outin)
-          func.local_arguments = arguments;
-        else
-          func.remote_arguments = arguments;
-*/
         func.remote_arguments = arguments;
         arguments.clear();
         state = state_e::funcName;
         break;
 
       case state_e::argListEnd:
-/*
-        if(func.dir == direction::out || func.dir == direction::outin)
-          func.remote_arguments = arguments;
-        else
-          func.local_arguments = arguments;
-*/
         func.local_arguments = arguments;
         arguments.clear();
         if(inverted)
@@ -307,20 +295,21 @@ std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
 
 void usage(char* filename)
 {
-  std::cout << "Usage: " << basename(filename) << " -v -c -s -i <input_file> -o <ouput_file>"
-            << std::endl
-            << std::endl << "       " << "-v        print version and copyright information"
-            << std::endl << "       " << "-c        output client code"
-            << std::endl << "       " << "-s        output server code"
-            << std::endl << "       " << "-i file   input file"
-            << std::endl << "       " << "-i file   output file"
-            << std::endl;
+  std::cout
+      << "Usage: " << filename << " -c [-i] input_file [-o] output_file"  << std::endl
+      << "       " << filename << " -s [-i] input_file [-o] output_file"  << std::endl
+      << "       " << filename << " -v"                                   << std::endl
+      << "  -v        print version and copyright information"            << std::endl
+      << "  -c        output client code"                                 << std::endl
+      << "  -s        output server code"                                 << std::endl
+      << "  -i file   input file"                                         << std::endl
+      << "  -o file   output filen"                                       << std::endl;
 }
 
 int main(int argc, char** argv)
 {
-  const char* input = nullptr;
-  const char* output = nullptr;
+  char* input = nullptr;
+  char* output = nullptr;
   int perspective = 0;
 
   for(int opt = 0; opt != -1; opt = ::getopt(argc, argv, "vcsi:o:"))
@@ -330,22 +319,19 @@ int main(int argc, char** argv)
       case 0: break;
 
       case 'v':
-        std::cout << "Incanto " << VERSION        << std::endl
-                  << "Copyright (c) 2017, Gravis" << std::endl
-                  << "All rights reserved."       << std::endl;
+
+        std::cout
+            << "Incanto " << VERSION        << std::endl
+            << "Copyright (c) 2017, Gravis" << std::endl
+            << "All rights reserved."       << std::endl;
         return EXIT_SUCCESS;
 
       case 's':
-      case 'c':
-        perspective = opt;
-        break;
-
+      case 'c': perspective = opt; break;
       case 'i': input  = optarg; break;
       case 'o': output = optarg; break;
-
-
       default:
-        usage(argv[0]);
+        usage(basename(argv[0]));
         return EXIT_FAILURE;
     }
   }
@@ -362,17 +348,12 @@ int main(int argc, char** argv)
      input == nullptr ||
      output == nullptr)
   {
-    std::cout << "oh snap" << std::endl;
-
-    usage(argv[0]);
+    usage(basename(argv[0]));
     return EXIT_FAILURE;
   }
 
-
   std::unique_ptr<CodePrinterBase> printer;
-
   printer = std::make_unique<CppCodePrinter>();
-
   printer->is_server = perspective == 's';
 
   try
@@ -394,37 +375,16 @@ int main(int argc, char** argv)
 
     if(printer == nullptr)
       throw("unable to allocate code printer");
-    /*
-    std::string data = "  server out   void configUpdated(void);\n"
-                       "  server inout {int errcode} unset(std::string key);\n"
-                       "  server inout {int errcode} set(std::string key, std::string value);\n"
-                       "  server inout {int errcode, std::string value} get(std::string key);\n";
-                       */
     printer->functions = parser(data);
 
     if(!printer->is_server)
-    {
-//      std::cout << "inverting for client" << std::endl;
       for(auto& func : printer->functions)
-      {
         func.dir = inverse(func.dir);
-      }
-    }
-/*
-    for(auto& func : printer->functions)
-    {
-      std::cout << (printer->is_server ? "server " : "client ");
-      func.print();
-    }
-*/
-//    std::cout << std::endl << "writing" << std::endl << std::endl;
-
     printer->writeFile(output);
-    std::cout << "Done!" << std::endl;
   }
-  catch(std::string str) { std::cout << "parser error: " << str << std::endl; }
-  catch(std::system_error e) { std::cout << "error: " << e.what() << std::endl; }
-  catch(...) { std::cout << "unexpected error!" << std::endl; }
+  catch(std::string str) { std::cerr << "parser error: " << str << std::endl; }
+  catch(std::system_error e) { std::cerr << "error: " << e.what() << std::endl; }
+  catch(...) { std::cerr << "unexpected error!" << std::endl; }
 
   return EXIT_SUCCESS;
 }
