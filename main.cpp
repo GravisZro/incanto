@@ -300,10 +300,10 @@ void usage(char* filename)
       << "       " << filename << " -s [-i] input_file [-o] output_file"  << std::endl
       << "       " << filename << " -v"                                   << std::endl
       << "  -v        print version and copyright information"            << std::endl
-      << "  -c        output client code"                                 << std::endl
-      << "  -s        output server code"                                 << std::endl
-      << "  -i file   input file"                                         << std::endl
-      << "  -o file   output filen"                                       << std::endl;
+      << "  -c        generate client code"                               << std::endl
+      << "  -s        generate server code"                               << std::endl
+      << "  -i file   input filename"                                     << std::endl
+      << "  -o file   output filename"                                    << std::endl;
 }
 
 int main(int argc, char** argv)
