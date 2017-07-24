@@ -86,9 +86,12 @@ struct CodePrinterBase
   std::fstream out;
   std::string relative_filename;
   bool is_server;
+  const char* name;
   std::list<function_descriptor> functions;
 
-  CodePrinterBase(void) : is_server(false) { out.exceptions(std::ios_base::failbit | std::ios_base::badbit ); }
+  CodePrinterBase(void)
+    : is_server(false), name(nullptr)
+  { out.exceptions(std::ios_base::failbit | std::ios_base::badbit ); }
   virtual ~CodePrinterBase(void) { }
 
   bool have_local(void)

@@ -21,6 +21,13 @@ struct PdtkCodePrinter : CodePrinterBase
 
   void print(void)
   {
+    if(name != nullptr)
+      classname = name;
+    else if(is_server)
+      classname = "IncantoServer";
+    else
+      classname = "IncantoClient";
+
     std::string header_name = relative_filename;
     std::transform(header_name.begin(), header_name.end(), header_name.begin(),
                    [](char l) { l = std::toupper(l); if(l < 'A' || l > 'Z') { l = '_'; } return l; });
@@ -44,7 +51,6 @@ struct PdtkCodePrinter : CodePrinterBase
         << std::endl;
     if(is_server)
     {
-      classname = "IncantoServer";
       out << std::endl << "class " << classname << " : public ServerSocket"
           << std::endl << "{"
           << std::endl << "public:"
@@ -58,7 +64,6 @@ struct PdtkCodePrinter : CodePrinterBase
     }
     else
     {
-      classname = "IncantoClient";
       out << std::endl << "class " << classname << " : public ClientSocket"
           << std::endl << "{"
           << std::endl << "public:"

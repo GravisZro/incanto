@@ -315,7 +315,7 @@ int main(int argc, char** argv)
   const char* name = nullptr;
   int perspective = 0;
 
-  for(int opt = 0; opt != -1; opt = ::getopt(argc, argv, "vcsi:o:"))
+  for(int opt = 0; opt != -1; opt = ::getopt(argc, argv, "vcsht:n:i:o:"))
   {
     switch (opt)
     {
@@ -380,6 +380,7 @@ int main(int argc, char** argv)
     }
 
     printer->is_server = perspective == 's';
+    printer->name = name;
 
     char raw_data[UINT16_MAX] = { 0 };
     std::string data;
