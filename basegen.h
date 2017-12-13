@@ -112,9 +112,9 @@ struct CodePrinterBase
 
   void writeFile(char* filename)
   {
-    if(::access(filename, F_OK) == posix::success_response) // if file exist
+    if(posix::access(filename, F_OK)) // if file exist
     {
-      if(::access(filename, W_OK) == posix::error_response) // if write access is denied
+      if(!posix::access(filename, W_OK)) // if write access is denied
         throw(std::system_error(errno, std::system_category()));
     }
     else if(errno == std::errc::permission_denied) // if permission denied to test file existence
