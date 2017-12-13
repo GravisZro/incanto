@@ -316,7 +316,7 @@ int main(int argc, char** argv)
   const char* name = nullptr;
   int perspective = 0;
 
-  for(int opt = 0; opt != -1; opt = ::getopt(argc, argv, "vcsht:n:i:o:"))
+  for(int opt = 0; opt != -1; opt = posix::getopt(argc, argv, "vcsht:n:i:o:"))
   {
     switch (opt)
     {
