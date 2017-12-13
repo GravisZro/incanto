@@ -1,6 +1,6 @@
 TEMPLATE = app
 CONFIG -= qt
-#CONFIG += c++11
+CONFIG += c++14
 
 QMAKE_CXXFLAGS += -std=c++14
 QMAKE_CXXFLAGS += -pipe -Os
