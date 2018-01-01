@@ -259,9 +259,9 @@ struct PdtkCodePrinter : CodePrinterBase
         << std::endl << "{"
         << std::endl << "  (void)fd;"
         << std::endl << "  std::string str;"
-        << std::endl << "  if(!(buffer >> str).hadError() && str == \"RPC\")"
+        << std::endl << "  if(!(buffer >> str).hadError() && str == \"RPC\" &&"
+        << std::endl << "     !(buffer >> str).hadError())"
         << std::endl << "  {"
-        << std::endl << "    buffer >> str;"
         << std::endl << "    switch(hash(str))"
         << std::endl << "    {";
 
