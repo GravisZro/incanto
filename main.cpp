@@ -1,8 +1,8 @@
 // STL
+#include <memory>
 #include <fstream>
 #include <iostream>
 #include <iomanip>
-#include <memory>
 #include <string>
 #include <functional>
 
