@@ -10,7 +10,8 @@ QMAKE_CXXFLAGS += -fno-threadsafe-statics
 
 #LIBS += -lpthread
 
-INCLUDEPATH += ../pdtk
+PDTK = ../pdtk
+INCLUDEPATH += $$PDTK
 
 SOURCES = main.cpp
 
@@ -21,25 +22,25 @@ HEADERS += \
 # show these files but don't build them
 showem {
 SOURCES += \
-    ../pdtk/socket.cpp \
-    ../pdtk/process.cpp \
-    ../pdtk/application.cpp \
-    ../pdtk/cxxutils/vfifo.cpp \
-    ../pdtk/specialized/eventbackend.cpp \
-    ../pdtk/specialized/peercred.cpp \
-    ../pdtk/specialized/procstat.cpp
+    $$PDTK/socket.cpp \
+    $$PDTK/process.cpp \
+    $$PDTK/application.cpp \
+    $$PDTK/cxxutils/vfifo.cpp \
+    $$PDTK/specialized/eventbackend.cpp \
+    $$PDTK/specialized/peercred.cpp \
+    $$PDTK/specialized/procstat.cpp
 
 HEADERS += \
-    ../pdtk/socket.h \
-    ../pdtk/process.h \
-    ../pdtk/cxxutils/vfifo.h \
-    ../pdtk/cxxutils/posix_helpers.h \
-    ../pdtk/cxxutils/socket_helpers.h \
-    ../pdtk/cxxutils/error_helpers.h \
-    ../pdtk/cxxutils/hashing.h \
-    ../pdtk/object.h \
-    ../pdtk/application.h \
-    ../pdtk/specialized/eventbackend.h \
-    ../pdtk/specialized/peercred.h \
-    ../pdtk/specialized/procstat.h
+    $$PDTK/socket.h \
+    $$PDTK/process.h \
+    $$PDTK/cxxutils/vfifo.h \
+    $$PDTK/cxxutils/posix_helpers.h \
+    $$PDTK/cxxutils/socket_helpers.h \
+    $$PDTK/cxxutils/error_helpers.h \
+    $$PDTK/cxxutils/hashing.h \
+    $$PDTK/object.h \
+    $$PDTK/application.h \
+    $$PDTK/specialized/eventbackend.h \
+    $$PDTK/specialized/peercred.h \
+    $$PDTK/specialized/procstat.h
 }
