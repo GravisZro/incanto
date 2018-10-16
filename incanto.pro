@@ -24,14 +24,15 @@ SOURCES += \
     ../pdtk/socket.cpp \
     ../pdtk/process.cpp \
     ../pdtk/application.cpp \
+    ../pdtk/cxxutils/vfifo.cpp \
     ../pdtk/specialized/eventbackend.cpp \
     ../pdtk/specialized/peercred.cpp \
     ../pdtk/specialized/procstat.cpp
 
 HEADERS += \
-    ../pdtk/cxxutils/vfifo.h \
     ../pdtk/socket.h \
     ../pdtk/process.h \
+    ../pdtk/cxxutils/vfifo.h \
     ../pdtk/cxxutils/posix_helpers.h \
     ../pdtk/cxxutils/socket_helpers.h \
     ../pdtk/cxxutils/error_helpers.h \
