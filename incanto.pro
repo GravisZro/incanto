@@ -10,37 +10,37 @@ QMAKE_CXXFLAGS += -fno-threadsafe-statics
 
 #LIBS += -lpthread
 
-PDTK = ../pdtk
-INCLUDEPATH += $$PDTK
+PUT = ../put
+INCLUDEPATH += $$PUT
 
 SOURCES = main.cpp
 
 HEADERS += \
     basegen.h \
-    pdtkgen.h
+    putgen.h
 
 # show these files but don't build them
 showem {
 SOURCES += \
-    $$PDTK/socket.cpp \
-    $$PDTK/process.cpp \
-    $$PDTK/application.cpp \
-    $$PDTK/cxxutils/vfifo.cpp \
-    $$PDTK/specialized/eventbackend.cpp \
-    $$PDTK/specialized/peercred.cpp \
-    $$PDTK/specialized/procstat.cpp
+    $$PUT/socket.cpp \
+    $$PUT/process.cpp \
+    $$PUT/application.cpp \
+    $$PUT/cxxutils/vfifo.cpp \
+    $$PUT/specialized/eventbackend.cpp \
+    $$PUT/specialized/peercred.cpp \
+    $$PUT/specialized/procstat.cpp
 
 HEADERS += \
-    $$PDTK/socket.h \
-    $$PDTK/process.h \
-    $$PDTK/cxxutils/vfifo.h \
-    $$PDTK/cxxutils/posix_helpers.h \
-    $$PDTK/cxxutils/socket_helpers.h \
-    $$PDTK/cxxutils/error_helpers.h \
-    $$PDTK/cxxutils/hashing.h \
-    $$PDTK/object.h \
-    $$PDTK/application.h \
-    $$PDTK/specialized/eventbackend.h \
-    $$PDTK/specialized/peercred.h \
-    $$PDTK/specialized/procstat.h
+    $$PUT/socket.h \
+    $$PUT/process.h \
+    $$PUT/cxxutils/vfifo.h \
+    $$PUT/cxxutils/posix_helpers.h \
+    $$PUT/cxxutils/socket_helpers.h \
+    $$PUT/cxxutils/error_helpers.h \
+    $$PUT/cxxutils/hashing.h \
+    $$PUT/object.h \
+    $$PUT/application.h \
+    $$PUT/specialized/eventbackend.h \
+    $$PUT/specialized/peercred.h \
+    $$PUT/specialized/procstat.h
 }
