@@ -27,6 +27,7 @@ SOURCES += \
     $$PUT/application.cpp \
     $$PUT/cxxutils/vfifo.cpp \
     $$PUT/specialized/eventbackend.cpp \
+    $$PUT/specialized/mutex.cpp \
     $$PUT/specialized/peercred.cpp \
     $$PUT/specialized/procstat.cpp
 
@@ -40,7 +41,9 @@ HEADERS += \
     $$PUT/cxxutils/hashing.h \
     $$PUT/object.h \
     $$PUT/application.h \
+    $$PUT/specialized/osdetect.h \
     $$PUT/specialized/eventbackend.h \
+    $$PUT/specialized/mutex.h \
     $$PUT/specialized/peercred.h \
     $$PUT/specialized/procstat.h
 }
