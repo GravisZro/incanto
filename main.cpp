@@ -9,11 +9,11 @@
 // POSIX
 #include <libgen.h>
 
-// PDTK
+// PUT
 #include <cxxutils/hashing.h>
 
 // project files
-#include "pdtkgen.h"
+#include "putgen.h"
 
 std::list<CodePrinterBase::function_descriptor> parser(const std::string& data)
 {
@@ -299,7 +299,7 @@ void usage(char* filename)
     << std::endl << "       " << filename << " -s [-t type] [-n name] [-i] FILE [-o] FILE"
     << std::endl << "  -c        Generate client code."
     << std::endl << "  -s        Generate server code."
-    << std::endl << "  -t type   Type of code to generate. Values: pdtk, qt, c, gtk, python, perl"
+    << std::endl << "  -t type   Type of code to generate. Values: put, qt, c, gtk, python, perl"
     << std::endl << "  -n name   Name of the generated class/struct/module."
     << std::endl << "  -i file   Input filename."
     << std::endl << "  -o file   Output filename."
@@ -326,7 +326,7 @@ int main(int argc, char** argv)
 
         std::cout
             << "Incanto " << VERSION        << std::endl
-            << "Copyright (c) 2017, Gravis" << std::endl
+            << "Copyright (c) 2018, Gravis" << std::endl
             << "All rights reserved."       << std::endl;
         return EXIT_SUCCESS;
 
@@ -363,7 +363,7 @@ int main(int argc, char** argv)
   }
 
   if(type == nullptr) // default output type
-    type = "pdtk";
+    type = "put";
   if(name == nullptr) // default name
     name = perspective == 's' ? "IncantoServer" : "IncantoClient";
 
@@ -372,7 +372,7 @@ int main(int argc, char** argv)
     std::unique_ptr<CodePrinterBase> printer;
     switch(hash(type))
     {
-      case "pdtk"_hash: printer = std::make_unique<PdtkCodePrinter>(); break;
+      case "put"_hash: printer = std::make_unique<PUTCodePrinter>(); break;
       case "qt"_hash:     throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "Qt code generation backend is not implemented!"));
       case "c"_hash:      throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "C code generation backend is not implemented!"));
       case "gtk"_hash:    throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "GTK+ code generation backend is not implemented!"));
@@ -394,7 +394,7 @@ int main(int argc, char** argv)
     while(!file.eof())
     {
       file.read(raw_data, UINT16_MAX);
-      data.append(raw_data, file.gcount());
+      data.append(raw_data, std::size_t(file.gcount()));
     }
     file.close();
 

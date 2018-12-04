@@ -1,5 +1,5 @@
-#ifndef PDTKGEN_H
-#define PDTKGEN_H
+#ifndef PUTGEN_H
+#define PUTGEN_H
 
 #include "basegen.h"
 #include <algorithm>
@@ -13,7 +13,7 @@
     std::swap(func.local_arguments, func.remote_arguments);
 #endif
 
-struct PdtkCodePrinter : CodePrinterBase
+struct PUTCodePrinter : CodePrinterBase
 {
   std::string classname;
   static inline bool is_fd(const std::string& str)
@@ -42,7 +42,7 @@ struct PdtkCodePrinter : CodePrinterBase
         << std::endl << "#include <vector>"
         << std::endl << "#include <cstdint>"
         << std::endl
-        << std::endl << "// PDTK"
+        << std::endl << "// PUT"
         << std::endl << "#include <object.h>"
         << std::endl << "#include <socket.h>"
         << std::endl << "#include <cxxutils/vfifo.h>"
@@ -320,4 +320,4 @@ struct PdtkCodePrinter : CodePrinterBase
   }
 };
 
-#endif // PDTKGEN_H
+#endif // PUTGEN_H
