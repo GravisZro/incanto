@@ -373,11 +373,11 @@ int main(int argc, char** argv)
     switch(hash(type))
     {
       case "put"_hash: printer = std::make_unique<PUTCodePrinter>(); break;
-      case "qt"_hash:     throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "Qt code generation backend is not implemented!"));
-      case "c"_hash:      throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "C code generation backend is not implemented!"));
-      case "gtk"_hash:    throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "GTK+ code generation backend is not implemented!"));
-      case "python"_hash: throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "Python code generation backend is not implemented!"));
-      case "perl"_hash:   throw(std::system_error(int(std::errc::not_supported), std::generic_category(), "Perl code generation backend is not implemented!"));
+      case "qt"_hash:     throw(std::system_error(int(posix::errc::not_supported), std::generic_category(), "Qt code generation backend is not implemented!"));
+      case "c"_hash:      throw(std::system_error(int(posix::errc::not_supported), std::generic_category(), "C code generation backend is not implemented!"));
+      case "gtk"_hash:    throw(std::system_error(int(posix::errc::not_supported), std::generic_category(), "GTK+ code generation backend is not implemented!"));
+      case "python"_hash: throw(std::system_error(int(posix::errc::not_supported), std::generic_category(), "Python code generation backend is not implemented!"));
+      case "perl"_hash:   throw(std::system_error(int(posix::errc::not_supported), std::generic_category(), "Perl code generation backend is not implemented!"));
     }
 
     printer->is_server = perspective == 's';
@@ -394,7 +394,7 @@ int main(int argc, char** argv)
     while(!file.eof())
     {
       file.read(raw_data, UINT16_MAX);
-      data.append(raw_data, std::size_t(file.gcount()));
+      data.append(raw_data, posix::size_t(file.gcount()));
     }
     file.close();
 

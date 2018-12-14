@@ -140,7 +140,7 @@ struct PUTCodePrinter : CodePrinterBase
         if(is_fd(arg.type))
         {
           if(count)
-            throw(std::system_error(int(std::errc::invalid_argument), std::generic_category(), "Only one file descriptor can be passed per incantation."));
+            throw(std::system_error(int(posix::errc::invalid_argument), std::generic_category(), "Only one file descriptor can be passed per incantation."));
           ++count;
           out << arg.name;
         }

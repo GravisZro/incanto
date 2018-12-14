@@ -117,7 +117,7 @@ struct CodePrinterBase
       if(!posix::access(filename, W_OK)) // if write access is denied
         throw(std::system_error(errno, std::system_category()));
     }
-    else if(errno == std::errc::permission_denied) // if permission denied to test file existence
+    else if(errno == posix::errc::permission_denied) // if permission denied to test file existence
       throw(std::system_error(errno, std::system_category()));
     // else file not existing is ok ;)
 
