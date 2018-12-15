@@ -123,7 +123,7 @@ struct CodePrinterBase
 
     out.open(filename, std::ios_base::out | std::ios_base::trunc);
     if(out.fail())
-      throw(std::system_error(int(std::errc::no_such_file_or_directory), std::system_category()));
+      throw(std::system_error(int(posix::errc::no_such_file_or_directory), std::system_category()));
 
     relative_filename = ::basename(filename);
     print();
