@@ -10,7 +10,7 @@
 #include <libgen.h>
 
 // PUT
-#include <cxxutils/hashing.h>
+#include <put/cxxutils/hashing.h>
 
 // project files
 #include "putgen.h"

@@ -43,11 +43,11 @@ struct PUTCodePrinter : CodePrinterBase
         << std::endl << "#include <cstdint>"
         << std::endl
         << std::endl << "// PUT"
-        << std::endl << "#include <object.h>"
-        << std::endl << "#include <socket.h>"
-        << std::endl << "#include <cxxutils/vfifo.h>"
-        << std::endl << "#include <cxxutils/hashing.h>"
-        << std::endl << "#include <cxxutils/posix_helpers.h>"
+        << std::endl << "#include <put/object.h>"
+        << std::endl << "#include <put/socket.h>"
+        << std::endl << "#include <put/cxxutils/vfifo.h>"
+        << std::endl << "#include <put/cxxutils/hashing.h>"
+        << std::endl << "#include <put/cxxutils/posix_helpers.h>"
         << std::endl;
     if(is_server)
     {
