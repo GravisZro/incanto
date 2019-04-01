@@ -62,7 +62,7 @@ $(TARGET): OUTPUT_DIR $(OBJS) $(STATICLIB)
 	@echo [ Linking ]: $@
 	$(QUIET) $(CXX) -o $@ $(OBJS) $(LDFLAGS)
 
-$(STATICLIB): $(PUT)
+$(BUILD_PATH)/$(STATICLIB): $(PUT)
 	@echo [Compiling]: $@
 	$(QUIET) make -f $(PUT)/Makefile.travis $(BUILD_PATH)/$(STATICLIB) -e \
 		SOURCE_PATH=$(PUT) BUILD_PATH=$(BUILD_PATH) \
