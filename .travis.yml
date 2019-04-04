@@ -85,4 +85,4 @@ matrix:
 git:
   submodules: true
 script:
-  - make -f Makefile.travis CXX=$COMPILER VERBOSE=true LTO_FLAG=$LTO_FLAG
+  - make -f Makefile.travis CXX=$COMPILER LTO_FLAG=$LTO_FLAG DEFINES=-D__CONTINUOUS_INTEGRATION__ VERBOSE=true
